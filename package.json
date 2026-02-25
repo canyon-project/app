@@ -17,7 +17,7 @@
     "postinstall": "npm run generate",
     "preinstall": "node ./scripts/check.mjs",
     "migrate:sql": "prisma migrate diff --from-empty --to-schema-datamodel ./prisma/schema.prisma --script > ./schema.sql",
-    "prepare": "pnpm run build && simple-git-hooks"
+    "prepare": "npm run build && simple-git-hooks"
   },
   "dependencies": {
     "@ant-design/icons": "^6.1.0",
