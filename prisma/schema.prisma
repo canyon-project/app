@@ -29,37 +29,27 @@ model Repo {
 }
 
 model Commit {
-  id        Int       @id @default(autoincrement())
-  sha       String
-  message   String?
-  repoId    Int
-  repo      Repo      @relation(fields: [repoId], references: [id])
-  authorId  Int?
-  author    User?     @relation(fields: [authorId], references: [id])
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  snapshots Snapshot[]
-  diffsFrom Diff[]    @relation("DiffFrom")
-  diffsTo   Diff[]    @relation("DiffTo")
-  crs      CR[]
-
-  @@unique([repoId, sha])
+  id      String @id
+  content Json
 }
 
-
 model MergeRequest {
-  id         Int      @id @default(autoincrement())
-  title      String?
-  status     String   @default("pending") // pending, approved, rejected
-  commitId   Int
-  commit     Commit   @relation(fields: [commitId], references: [id], onDelete: Cascade)
-  reviewerId Int?
-  reviewer   User?    @relation(fields: [reviewerId], references: [id])
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id      String @id
+  content Json
+}
 
-  @@index([commitId])
-  @@index([status])
+model Diff {
+  id String @id @default(cuid())
+
+  provider  String
+  repoID    String @map("repo_id")
+  from      String
+  to        String
+  path      String
+  additions Int[]
+  deletions Int[]
+  subject   String
+  subjectID String @map("subject_id")
 }
 
 model Infra {
