@@ -35,3 +35,6 @@ generated
 old
 
 .env
+
+
+prisma/local.db

@@ -81,6 +81,7 @@ collectApi.openapi(coverageClientRoute, async (c) => {
     const id = `${buildHash}|${sceneKey}`;
     const scene = body.scene || {};
     const builds = Array.isArray(prismacoverage.builds) ? prismacoverage.builds : [];
+    const now = new Date();
 
     await prisma.coverage.create({
       data: {
@@ -94,6 +95,8 @@ collectApi.openapi(coverageClientRoute, async (c) => {
         sceneKey,
         scene,
         builds: builds as object,
+        createdAt: now,
+        updatedAt: now,
       },
     });
   } catch {
@@ -196,6 +199,8 @@ collectApi.openapi(coverageMapInitRoute, async (c) => {
         sceneKey,
         scene,
         builds: initialBuilds,
+        createdAt: now,
+        updatedAt: now,
       },
     });
   }

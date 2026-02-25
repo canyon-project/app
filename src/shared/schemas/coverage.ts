@@ -1,33 +1,13 @@
 import { z } from "@hono/zod-openapi";
 
-/** coverage 单条：需包含 s, f, b */
-const CoverageEntrySchema = z.object({
-  s: z.record(z.unknown()).optional(),
-  f: z.record(z.unknown()).optional(),
-  b: z.unknown().optional(),
-  statementMap: z.unknown().optional(),
-  fnMap: z.unknown().optional(),
-  branchMap: z.unknown().optional(),
-  contentHash: z.string().optional(),
-  inputSourceMap: z.unknown().optional(),
-  oldPath: z.string().optional(),
-  path: z.string().optional(),
-  sha: z.string().optional(),
-  provider: z.string().optional(),
-  repoID: z.string().optional(),
-  instrumentCwd: z.string().optional(),
-  buildTarget: z.string().optional(),
-  buildHash: z.string().optional(),
-});
-
-/** coverage 数据结构：Record<filePath, entry> */
-export const CoverageDataSchema = z.record(z.string(), CoverageEntrySchema);
+/** coverage 数据结构：Record<filePath, entry>，放宽校验避免 Zod v4 与 openapi 扩展兼容问题 */
+const CoverageDataSchema = z.record(z.string(), z.any());
 
 /** POST /api/coverage/client 请求体 */
 export const CoverageClientSchema = z
   .object({
     coverage: CoverageDataSchema,
-    scene: z.record(z.unknown()).optional(),
+    scene: z.record(z.string(), z.any()).optional(),
   })
   .openapi("CoverageClient");
 
@@ -39,9 +19,9 @@ export const CoverageMapInitSchema = z
     repoID: z.string().optional(),
     instrumentCwd: z.string().optional(),
     buildTarget: z.string().optional(),
-    build: z.record(z.unknown()).optional(),
+    build: z.record(z.string(), z.any()).optional(),
     coverage: CoverageDataSchema,
-    diff: z.array(z.unknown()).optional(),
+    diff: z.array(z.any()).optional(),
   })
   .openapi("CoverageMapInit");
 

@@ -5,6 +5,7 @@ import { serveStatic } from "@hono/node-server/serve-static";
 import { fileURLToPath } from "node:url";
 
 import { loadInfra } from "@/api/lib/infra";
+import { initPrismaSqlite } from "@/api/lib/prisma-sqlite.ts";
 import { startCoverageConsumer } from "@/api/lib/collect/coverage-consumer.ts";
 import postsApi from "@/api/routes/posts.ts";
 import reposApi from "@/api/routes/repos.ts";
@@ -12,6 +13,7 @@ import sourceApi from "@/api/routes/source.ts";
 import collectApi from "@/api/routes/collect.ts";
 
 await loadInfra();
+await initPrismaSqlite();
 startCoverageConsumer();
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
