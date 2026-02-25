@@ -7,6 +7,9 @@ import tailwindcss from "@tailwindcss/vite";
 import path from "path";
 
 export default defineConfig({
+  build: {
+    target: "es2022", // 支持 top-level await（loadInfra、initPrismaSqlite）
+  },
   plugins: [
     react(),
     Pages({
@@ -15,7 +18,8 @@ export default defineConfig({
     tailwindcss(),
     build({
       entry: "./src/api/index.ts",
-      port: 3001,
+      port: 8080,
+      external: ["@prisma/client"], // 避免解析为 .prisma/client/default，导致 Node 无法加载
     }),
     devServer({
       entry: "./src/api/index.ts",
