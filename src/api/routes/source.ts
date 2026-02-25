@@ -4,7 +4,7 @@ import { createScmAdapter } from "@/api/scm/index.ts";
 import { getInfra, InfraKey } from "@/api/lib/infra.ts";
 
 const SourceQuerySchema = z.object({
-  repoId: z.string().describe("仓库 ID，支持：1) 完整 id 如 gitlab:owner/repo 2) pathWithNamespace 如 owner/repo 3) 平台数字 ID"),
+  repo_id: z.string().describe("仓库 ID，支持：1) 完整 id 如 gitlab:owner/repo 2) path_with_namespace 如 owner/repo 3) 平台数字 ID"),
   provider: z.enum(["gitlab", "github"]).describe("SCM 平台"),
   path: z.string().describe("文件相对路径"),
   ref: z.string().describe("分支、tag 或 commit sha"),
@@ -35,12 +35,12 @@ const sourceRoute = createRoute({
 const sourceApi = new OpenAPIHono();
 
 sourceApi.openapi(sourceRoute, async (c) => {
-  const { repoId, provider, path, ref } = c.req.valid("query");
+  const { repo_id, provider, path, ref } = c.req.valid("query");
 
-  // repoId 支持完整 id (provider:pathWithNamespace)、pathWithNamespace 或数字 ID
-  const scmRepoId = repoId.includes(":")
-    ? repoId.slice(repoId.indexOf(":") + 1)
-    : repoId;
+  // repo_id 支持完整 id (provider:path_with_namespace)、path_with_namespace 或数字 ID
+  const scmRepoId = repo_id.includes(":")
+    ? repo_id.slice(repo_id.indexOf(":") + 1)
+    : repo_id;
 
   let scm = null;
   if (provider === "gitlab") {
