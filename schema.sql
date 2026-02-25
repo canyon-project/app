@@ -2,19 +2,19 @@
 CREATE SCHEMA IF NOT EXISTS "public";
 
 -- CreateTable
-CREATE TABLE "User" (
+CREATE TABLE "canyon_next_user" (
     "id" TEXT NOT NULL,
     "username" TEXT NOT NULL,
     "nickname" TEXT NOT NULL,
     "email" TEXT NOT NULL,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
 
-    CONSTRAINT "User_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "canyon_next_user_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
-CREATE TABLE "Repo" (
+CREATE TABLE "canyon_next_repo" (
     "id" TEXT NOT NULL,
     "provider" TEXT NOT NULL,
     "path_with_namespace" TEXT NOT NULL,
@@ -24,27 +24,27 @@ CREATE TABLE "Repo" (
     "created_at" TIMESTAMP(3) NOT NULL,
     "updated_at" TIMESTAMP(3) NOT NULL,
 
-    CONSTRAINT "Repo_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "canyon_next_repo_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
-CREATE TABLE "Commit" (
+CREATE TABLE "canyon_next_commit" (
     "id" TEXT NOT NULL,
     "content" JSONB NOT NULL,
 
-    CONSTRAINT "Commit_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "canyon_next_commit_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
-CREATE TABLE "MergeRequest" (
+CREATE TABLE "canyon_next_merge_request" (
     "id" TEXT NOT NULL,
     "content" JSONB NOT NULL,
 
-    CONSTRAINT "MergeRequest_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "canyon_next_merge_request_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
-CREATE TABLE "Diff" (
+CREATE TABLE "canyon_next_diff" (
     "id" TEXT NOT NULL,
     "provider" TEXT NOT NULL,
     "repo_id" TEXT NOT NULL,
@@ -56,7 +56,7 @@ CREATE TABLE "Diff" (
     "subject" TEXT NOT NULL,
     "subject_id" TEXT NOT NULL,
 
-    CONSTRAINT "Diff_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "canyon_next_diff_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable

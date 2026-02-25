@@ -9,38 +9,45 @@ datasource db {
 
 
 model User {
-  id        String      @id
-  username      String
-  nickname String
+  id        String   @id
+  username  String
+  nickname  String
   email     String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("canyon_next_user")
 }
 
 model Repo {
   id                String   @id
-    provider          String
+  provider          String
   pathWithNamespace String   @map("path_with_namespace")
   description       String
   config            String
   bu                String
   createdAt         DateTime @map("created_at")
   updatedAt         DateTime @map("updated_at")
+
+  @@map("canyon_next_repo")
 }
 
 model Commit {
   id      String @id
   content Json
+
+  @@map("canyon_next_commit")
 }
 
 model MergeRequest {
   id      String @id
   content Json
+
+  @@map("canyon_next_merge_request")
 }
 
 model Diff {
-  id String @id @default(cuid())
-
+  id        String @id @default(cuid())
   provider  String
   repoID    String @map("repo_id")
   from      String
@@ -50,6 +57,8 @@ model Diff {
   deletions Int[]
   subject   String
   subjectID String @map("subject_id")
+
+  @@map("canyon_next_diff")
 }
 
 model Infra {

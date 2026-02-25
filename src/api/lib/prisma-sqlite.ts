@@ -14,7 +14,7 @@ export async function initPrismaSqlite(): Promise<void> {
       status TEXT NOT NULL DEFAULT 'PENDING'
         CHECK (status IN ('PENDING', 'PROCESSING', 'FAILED')),
       pid INTEGER,
-      createdAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+      created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
     );
   `);
   await prisma.$connect();

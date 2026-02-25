@@ -21,7 +21,7 @@ model CoverageQueue {
   payload   String      // JSON string
   status    QueueStatus @default(PENDING)
   pid       Int?        // 当前进程 ID
-  createdAt DateTime    @default(now())
+  createdAt DateTime    @default(now()) @map("created_at")
 
   @@map("coverage_queue")
 }
