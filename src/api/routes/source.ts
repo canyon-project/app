@@ -4,7 +4,8 @@ import { createScmAdapter } from "@/api/scm/index.ts";
 import { getInfra, InfraKey } from "@/api/lib/infra.ts";
 
 const SourceQuerySchema = z.object({
-  repoId: z.string().describe("仓库 ID，格式 provider:pathWithNamespace，如 gitlab:owner/repo"),
+  repoId: z.string().describe("仓库 ID，支持：1) 完整 id 如 gitlab:owner/repo 2) pathWithNamespace 如 owner/repo 3) 平台数字 ID"),
+  provider: z.enum(["gitlab", "github"]).describe("SCM 平台"),
   path: z.string().describe("文件相对路径"),
   ref: z.string().describe("分支、tag 或 commit sha"),
 });
@@ -34,14 +35,12 @@ const sourceRoute = createRoute({
 const sourceApi = new OpenAPIHono();
 
 sourceApi.openapi(sourceRoute, async (c) => {
-  const { repoId, path, ref } = c.req.valid("query");
+  const { repoId, provider, path, ref } = c.req.valid("query");
 
-  const colonIndex = repoId.indexOf(":");
-  if (colonIndex <= 0) {
-    return c.json({ error: "repoId 格式应为 provider:pathWithNamespace" }, 400);
-  }
-  const provider = repoId.slice(0, colonIndex).toLowerCase();
-  const pathWithNamespace = repoId.slice(colonIndex + 1);
+  // repoId 支持完整 id (provider:pathWithNamespace)、pathWithNamespace 或数字 ID
+  const scmRepoId = repoId.includes(":")
+    ? repoId.slice(repoId.indexOf(":") + 1)
+    : repoId;
 
   let scm = null;
   if (provider === "gitlab") {
@@ -62,7 +61,7 @@ sourceApi.openapi(sourceRoute, async (c) => {
   }
 
   try {
-    const content = await scm.getFileContent(pathWithNamespace, path, ref);
+    const content = await scm.getFileContent(scmRepoId, path, ref);
     return c.text(content, 200, {
       "Content-Type": "text/plain; charset=utf-8",
     });
