@@ -1,6 +1,8 @@
 import { createRoute, z } from "@hono/zod-openapi";
 import { OpenAPIHono } from "@hono/zod-openapi";
 import { prisma } from "@/api/lib/prisma.ts";
+import { createScmAdapter } from "@/api/scm/index.ts";
+import { getInfra, InfraKey } from "@/api/lib/infra.ts";
 
 const RepoSchema = z
   .object({
@@ -146,7 +148,34 @@ reposApi.openapi(getRoute, async (c) => {
   if (!repo) {
     return c.json({ error: "Not found" }, 404);
   }
-  return c.json(toResponse(repo));
+  const response = toResponse(repo);
+
+  // 尝试从 SCM（GitLab/GitHub）拉取最新仓库信息，丰富 description
+  const provider = repo.provider.toLowerCase();
+  let scm = null;
+  if (provider === "gitlab") {
+    const base = getInfra(InfraKey.GITLAB_BASE_URL);
+    const token = getInfra(InfraKey.GITLAB_PRIVATE_TOKEN);
+    if (base && token && token !== "-") {
+      scm = createScmAdapter({ type: "gitlab", base, token });
+    }
+  } else if (provider === "github") {
+    const token = getInfra(InfraKey.GITHUB_PRIVATE_TOKEN);
+    if (token && token !== "-") {
+      scm = createScmAdapter({ type: "github", token });
+    }
+  }
+  console.log(scm,provider);
+  if (scm) {
+    try {
+      const scmInfo = await scm.getRepoInfo(repo.pathWithNamespace);
+      response.description = scmInfo.description;
+    } catch {
+      // SCM 请求失败时保留 DB 中的 description
+    }
+  }
+
+  return c.json(response);
 });
 
 reposApi.openapi(createRouteDef, async (c) => {
