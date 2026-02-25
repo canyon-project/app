@@ -25,6 +25,7 @@ src/
 │   ├── index.tsx
 │   └── posts/          # /posts、/posts/new、/posts/[id]/edit
 ├── layouts/             # 布局组件
+├── shared/schemas/      # 前后端共享 Zod schema 与类型
 ├── services/            # 前端 API 调用封装
 ├── lib/                 # 工具函数
 ├── i18n.ts              # 国际化配置
@@ -57,6 +58,23 @@ prisma/
 - **路由**：`src/api/routes/` 下按资源拆分，使用 `@hono/zod-openapi` 定义 schema 与路由
 - **Swagger**：`/api/ui` 为 Swagger UI，`/api/doc` 为 OpenAPI JSON
 - **健康检查**：`/api/health`
+
+## 前端样式规范
+
+- **组件**：使用 Ant Design 组件（Button、Form、Table、Card 等）
+- **布局**：用 Tailwind CSS 写布局（flex、grid、间距、响应式等），如 `flex`、`gap-4`、`p-6`、`max-w-2xl`
+
+## 前后端类型同构
+
+- **共享 schema**：`src/shared/schemas/` 下用 Zod 定义 schema，用 `z.infer` 推导 TypeScript 类型
+- **后端**：路由从 shared 导入 schema 做校验与 OpenAPI
+- **前端**：service 从 shared 导入类型，避免重复定义
+
+```ts
+// src/shared/schemas/repo.ts
+export const RepoSchema = z.object({ ... }).openapi("Repo");
+export type Repo = z.infer<typeof RepoSchema>;
+```
 
 ## 代码规范
 
