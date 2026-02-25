@@ -12,6 +12,7 @@ const BasicLayout: FC<{
   const navItems = [
     { path: "/", label: "首页" },
     { path: "/posts", label: "文章" },
+    { path: "/repos", label: "仓库" },
     { path: "/settings", label: "设置" },
   ];
 

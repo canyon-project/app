@@ -53,9 +53,13 @@ model Diff {
 }
 
 model Infra {
-  key                   String @id
-  value                  String
-  createdAt              DateTime @default(now())
-  updatedAt              DateTime @updatedAt
+  id                     String   @id
+  name                   String
+  value                  String   @db.Text
+  createdAt              DateTime @default(now()) @map("createdOn")
+  updatedAt              DateTime @updatedAt @map("updatedOn")
+  isEncrypted            Boolean  @default(false) @map("isEncrypted")
+  lastSyncedEnvFileValue String?  @map("lastSyncedEnvFileValue")
 
+  @@map("canyon_next_infra_config")
 }

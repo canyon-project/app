@@ -14,7 +14,10 @@
     "lint:fix": "oxlint --fix",
     "fmt": "oxfmt",
     "generate": "prisma generate",
-    "postinstall": "npm run generate"
+    "postinstall": "npm run generate",
+    "preinstall": "node ./scripts/check.mjs",
+    "migrate:sql": "prisma migrate diff --from-empty --to-schema-datamodel ./prisma/schema.prisma --script > ./schema.sql"
+
   },
   "dependencies": {
     "@ant-design/icons": "^6.1.0",
