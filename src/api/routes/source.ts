@@ -2,6 +2,7 @@ import { createRoute, z } from "@hono/zod-openapi";
 import { OpenAPIHono } from "@hono/zod-openapi";
 import { createScmAdapter } from "@/api/scm/index.ts";
 import { getInfra, InfraKey } from "@/api/lib/infra.ts";
+import {logger} from "@/api/logger";
 
 const SourceQuerySchema = z.object({
   repo_id: z.string().describe("仓库 ID，支持：1) 完整 id 如 gitlab:owner/repo 2) path_with_namespace 如 owner/repo 3) 平台数字 ID"),
@@ -43,6 +44,12 @@ sourceApi.openapi(sourceRoute, async (c) => {
     : repo_id;
 
   let scm = null;
+  logger({
+    type:'info',
+    title:'sourceApi called',
+    message:'sourceApi called',
+    addInfo: { repo_id, provider, path, ref }
+  })
   if (provider === "gitlab") {
     const base = getInfra(InfraKey.GITLAB_BASE_URL);
     const token = getInfra(InfraKey.GITLAB_PRIVATE_TOKEN);
