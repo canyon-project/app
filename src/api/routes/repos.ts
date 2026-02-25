@@ -3,37 +3,11 @@ import { OpenAPIHono } from "@hono/zod-openapi";
 import { prisma } from "@/api/lib/prisma.ts";
 import { createScmAdapter } from "@/api/scm/index.ts";
 import { getInfra, InfraKey } from "@/api/lib/infra.ts";
-
-const RepoSchema = z
-  .object({
-    id: z.string(),
-    provider: z.string(),
-    pathWithNamespace: z.string(),
-    description: z.string(),
-    config: z.string(),
-    bu: z.string(),
-    createdAt: z.string().datetime(),
-    updatedAt: z.string().datetime(),
-  })
-  .openapi("Repo");
-
-const CreateRepoSchema = z
-  .object({
-    provider: z.string().min(1).openapi({ example: "gitlab" }),
-    pathWithNamespace: z.string().min(1).openapi({ example: "owner/repo" }),
-    description: z.string().optional().default(""),
-    config: z.string().optional().default(""),
-    bu: z.string().optional().default(""),
-  })
-  .openapi("CreateRepo");
-
-const UpdateRepoSchema = z
-  .object({
-    description: z.string().optional(),
-    config: z.string().optional(),
-    bu: z.string().optional(),
-  })
-  .openapi("UpdateRepo");
+import {
+  RepoSchema,
+  CreateRepoSchema,
+  UpdateRepoSchema,
+} from "@/shared/schemas/repo.ts";
 
 const IdParamSchema = z.object({
   id: z.string().openapi({ param: { name: "id", in: "path" } }),
@@ -165,7 +139,6 @@ reposApi.openapi(getRoute, async (c) => {
       scm = createScmAdapter({ type: "github", token });
     }
   }
-  console.log(scm,provider);
   if (scm) {
     try {
       const scmInfo = await scm.getRepoInfo(repo.pathWithNamespace);

@@ -1,29 +1,7 @@
 import { request } from "./request";
+import type { Repo, CreateRepoInput, UpdateRepoInput } from "@/shared/schemas/repo.ts";
 
-export interface Repo {
-  id: string;
-  provider: string;
-  pathWithNamespace: string;
-  description: string;
-  config: string;
-  bu: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface CreateRepoInput {
-  provider: string;
-  pathWithNamespace: string;
-  description?: string;
-  config?: string;
-  bu?: string;
-}
-
-export interface UpdateRepoInput {
-  description?: string;
-  config?: string;
-  bu?: string;
-}
+export type { Repo, CreateRepoInput, UpdateRepoInput };
 
 export async function getRepos(): Promise<Repo[]> {
   const res = await request.get<Repo[]>("/api/repos");
