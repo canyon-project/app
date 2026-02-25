@@ -11,7 +11,7 @@ import postsApi from "@/api/routes/posts.ts";
 import reposApi from "@/api/routes/repos.ts";
 import sourceApi from "@/api/routes/source.ts";
 import collectApi from "@/api/routes/collect.ts";
-import { historyApiFallback } from "./dist/index.mjs";
+import { historyApiFallback } from "hono-history-api-fallback";
 
 await loadInfra();
 await initPrismaSqlite();
