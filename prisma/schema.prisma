@@ -7,11 +7,65 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Post {
-  id        Int      @id @default(autoincrement())
-  title     String
-  content   String?
-  published Boolean  @default(false)
+
+model User {
+  id        String      @id
+  username      String
+  nickname String
+  email     String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model Repo {
+  id                String   @id
+    provider          String
+  pathWithNamespace String   @map("path_with_namespace")
+  description       String
+  config            String
+  bu                String
+  createdAt         DateTime @map("created_at")
+  updatedAt         DateTime @map("updated_at")
+}
+
+model Commit {
+  id        Int       @id @default(autoincrement())
+  sha       String
+  message   String?
+  repoId    Int
+  repo      Repo      @relation(fields: [repoId], references: [id])
+  authorId  Int?
+  author    User?     @relation(fields: [authorId], references: [id])
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  snapshots Snapshot[]
+  diffsFrom Diff[]    @relation("DiffFrom")
+  diffsTo   Diff[]    @relation("DiffTo")
+  crs      CR[]
+
+  @@unique([repoId, sha])
+}
+
+
+model MergeRequest {
+  id         Int      @id @default(autoincrement())
+  title      String?
+  status     String   @default("pending") // pending, approved, rejected
+  commitId   Int
+  commit     Commit   @relation(fields: [commitId], references: [id], onDelete: Cascade)
+  reviewerId Int?
+  reviewer   User?    @relation(fields: [reviewerId], references: [id])
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([commitId])
+  @@index([status])
+}
+
+model Infra {
+  key                   String @id
+  value                  String
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
 }
