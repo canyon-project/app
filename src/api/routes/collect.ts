@@ -2,11 +2,11 @@ import { createRoute } from "@hono/zod-openapi";
 import { OpenAPIHono } from "@hono/zod-openapi";
 import { prisma } from "@/api/lib/prisma.ts";
 import { prisma as prismaSqlite } from "@/api/lib/prisma-sqlite.ts";
-import { generateObjectSignature, encodeObjectToCompressedBuffer } from "@/api/lib/collect/helpers.ts";
 import {
-  CoverageClientSchema,
-  CoverageMapInitSchema,
-} from "@/shared/schemas/coverage.ts";
+  generateObjectSignature,
+  encodeObjectToCompressedBuffer,
+} from "@/api/lib/collect/helpers.ts";
+import { CoverageClientSchema, CoverageMapInitSchema } from "@/shared/schemas/coverage.ts";
 
 const coverageClientRoute = createRoute({
   method: "post",
@@ -71,7 +71,8 @@ collectApi.openapi(coverageClientRoute, async (c) => {
     return c.json(
       {
         success: false,
-        message: "找不到对应的 coverage 记录，请先通过 /api/coverage/map/init 接口上传覆盖率映射数据",
+        message:
+          "找不到对应的 coverage 记录，请先通过 /api/coverage/map/init 接口上传覆盖率映射数据",
       },
       502,
     );
@@ -149,24 +150,31 @@ collectApi.openapi(coverageMapInitRoute, async (c) => {
 
   const coverageValues = Object.values(filteredCoverage);
   if (coverageValues.length === 0) {
-    return c.json({
-      success: false,
-      message: "Coverage data is empty, cannot extract parameters.",
-    }, 400);
+    return c.json(
+      {
+        success: false,
+        message: "Coverage data is empty, cannot extract parameters.",
+      },
+      400,
+    );
   }
 
   const firstEntry = coverageValues[0] as Record<string, unknown>;
   if (firstEntry.sha !== undefined) sha = firstEntry.sha as string;
   if (firstEntry.provider !== undefined) provider = firstEntry.provider as string;
   if (firstEntry.repoID !== undefined) repoID = firstEntry.repoID as string;
-  if (firstEntry.instrumentCwd !== undefined && !instrumentCwd) instrumentCwd = firstEntry.instrumentCwd as string;
+  if (firstEntry.instrumentCwd !== undefined && !instrumentCwd)
+    instrumentCwd = firstEntry.instrumentCwd as string;
   if (firstEntry.buildTarget !== undefined) buildTarget = firstEntry.buildTarget as string;
 
   if (!sha || !provider || !repoID || !instrumentCwd) {
-    return c.json({
-      success: false,
-      message: "缺少必要参数：sha, provider, repoID, instrumentCwd",
-    }, 400);
+    return c.json(
+      {
+        success: false,
+        message: "缺少必要参数：sha, provider, repoID, instrumentCwd",
+      },
+      400,
+    );
   }
 
   const buildHash = calculateBuildHash(sha, provider, repoID, instrumentCwd, buildTarget);

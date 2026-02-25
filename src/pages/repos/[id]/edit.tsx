@@ -10,10 +10,7 @@ const RepoEditPage = () => {
   const navigate = useNavigate();
   const [form] = Form.useForm();
 
-  const { data: repo, loading } = useRequest(
-    () => getRepo(id!),
-    { ready: !!id },
-  );
+  const { data: repo, loading } = useRequest(() => getRepo(id!), { ready: !!id });
 
   useEffect(() => {
     if (repo) {

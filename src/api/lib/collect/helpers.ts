@@ -10,12 +10,16 @@ function stableStringify(obj: unknown): string {
     return "[" + obj.map(stableStringify).join(",") + "]";
   }
   const keys = Object.keys(obj).sort();
-  const pairs = keys.map((k) => JSON.stringify(k) + ":" + stableStringify((obj as Record<string, unknown>)[k]));
+  const pairs = keys.map(
+    (k) => JSON.stringify(k) + ":" + stableStringify((obj as Record<string, unknown>)[k]),
+  );
   return "{" + pairs.join(",") + "}";
 }
 
 export const generateObjectSignature = (object: unknown): string =>
-  createHash("sha1").update(stableStringify(object) || "").digest("hex");
+  createHash("sha1")
+    .update(stableStringify(object) || "")
+    .digest("hex");
 
 export function encodeObjectToCompressedBuffer(object: unknown): Buffer {
   const jsonString = JSON.stringify(object);

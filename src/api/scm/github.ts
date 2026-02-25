@@ -1,10 +1,5 @@
 import axios from "axios";
-import type {
-  ChangedFile,
-  CommitInfo,
-  CompareDiffItem,
-  RepoInfo,
-} from "./types.ts";
+import type { ChangedFile, CommitInfo, CompareDiffItem, RepoInfo } from "./types.ts";
 import type { ScmAdapter } from "./adapter.ts";
 
 const GITHUB_BASE = "https://api.github.com";
@@ -101,11 +96,7 @@ export class GithubAdapter implements ScmAdapter {
     };
   }
 
-  async getCompareDiffs(
-    repoID: string,
-    from: string,
-    to: string,
-  ): Promise<CompareDiffItem[]> {
+  async getCompareDiffs(repoID: string, from: string, to: string): Promise<CompareDiffItem[]> {
     const { owner, repo } = await this.resolveOwnerRepo(repoID);
     const url = `${this.base}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/compare/${encodeURIComponent(from)}...${encodeURIComponent(to)}`;
     const { data } = await axios.get<{

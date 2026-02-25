@@ -26,11 +26,7 @@ const PostNewPage = () => {
           onFinish={handleSubmit}
           initialValues={{ published: false }}
         >
-          <Form.Item
-            name="title"
-            label="标题"
-            rules={[{ required: true, message: "请输入标题" }]}
-          >
+          <Form.Item name="title" label="标题" rules={[{ required: true, message: "请输入标题" }]}>
             <Input placeholder="文章标题" size="large" />
           </Form.Item>
           <Form.Item name="content" label="内容">

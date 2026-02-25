@@ -24,7 +24,10 @@ const CreatePostSchema = z
 const UpdatePostSchema = CreatePostSchema.partial().openapi("UpdatePost");
 
 const IdParamSchema = z.object({
-  id: z.string().regex(/^\d+$/).openapi({ param: { name: "id", in: "path" } }),
+  id: z
+    .string()
+    .regex(/^\d+$/)
+    .openapi({ param: { name: "id", in: "path" } }),
 });
 
 // 列表

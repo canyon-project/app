@@ -35,7 +35,10 @@ const ReposPage = () => {
       title: "仓库",
       dataIndex: "pathWithNamespace",
       render: (pathWithNamespace, record) => (
-        <Link to={`/repos/${encodeURIComponent(record.id)}/edit`} className="text-[#0071c2] hover:underline">
+        <Link
+          to={`/repos/${encodeURIComponent(record.id)}/edit`}
+          className="text-[#0071c2] hover:underline"
+        >
           {pathWithNamespace}
         </Link>
       ),

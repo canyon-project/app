@@ -14,7 +14,10 @@ export const CoverageClientSchema = z
 /** POST /api/coverage/map/init 请求体 */
 export const CoverageMapInitSchema = z
   .object({
-    sha: z.string().regex(/^[a-f0-9]{40}$/i).optional(),
+    sha: z
+      .string()
+      .regex(/^[a-f0-9]{40}$/i)
+      .optional(),
     provider: z.string().optional(),
     repoID: z.string().optional(),
     instrumentCwd: z.string().optional(),

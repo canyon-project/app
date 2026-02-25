@@ -7,7 +7,8 @@ const IndexPage = () => {
       <div className="bg-white rounded-lg shadow-sm p-8 max-w-2xl">
         <h1 className="text-2xl font-semibold mb-4">欢迎</h1>
         <p className="text-gray-600 mb-6">
-          这是一个基于 Vite + React + Hono 的全栈模板，使用 Prisma 作为 ORM，Ant Design 作为 UI 组件库。
+          这是一个基于 Vite + React + Hono 的全栈模板，使用 Prisma 作为 ORM，Ant Design 作为 UI
+          组件库。
         </p>
         <Link
           to="/posts"

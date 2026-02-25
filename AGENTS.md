@@ -38,15 +38,15 @@ prisma/
 
 ## 常用命令
 
-| 命令 | 说明 |
-|------|------|
-| `pnpm dev` | 开发（Vite + Hono dev server） |
-| `pnpm build` | 构建（prisma generate + client + server） |
-| `pnpm start` | 生产运行 `node dist/index.js` |
-| `pnpm run generate` | 生成 Prisma Client |
-| `pnpm test` | 运行 Vitest |
-| `pnpm lint` | oxlint 检查 |
-| `pnpm fmt` | oxfmt 格式化 |
+| 命令                | 说明                                      |
+| ------------------- | ----------------------------------------- |
+| `pnpm dev`          | 开发（Vite + Hono dev server）            |
+| `pnpm build`        | 构建（prisma generate + client + server） |
+| `pnpm start`        | 生产运行 `node dist/index.js`             |
+| `pnpm run generate` | 生成 Prisma Client                        |
+| `pnpm test`         | 运行 Vitest                               |
+| `pnpm lint`         | oxlint 检查                               |
+| `pnpm fmt`          | oxfmt 格式化                              |
 
 ## 路径别名
 

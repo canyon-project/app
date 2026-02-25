@@ -2,10 +2,14 @@ import { createRoute, z } from "@hono/zod-openapi";
 import { OpenAPIHono } from "@hono/zod-openapi";
 import { createScmAdapter } from "@/api/scm/index.ts";
 import { getInfra, InfraKey } from "@/api/lib/infra.ts";
-import {logger} from "@/api/logger";
+import { logger } from "@/api/logger";
 
 const SourceQuerySchema = z.object({
-  repo_id: z.string().describe("仓库 ID，支持：1) 完整 id 如 gitlab:owner/repo 2) path_with_namespace 如 owner/repo 3) 平台数字 ID"),
+  repo_id: z
+    .string()
+    .describe(
+      "仓库 ID，支持：1) 完整 id 如 gitlab:owner/repo 2) path_with_namespace 如 owner/repo 3) 平台数字 ID",
+    ),
   provider: z.enum(["gitlab", "github"]).describe("SCM 平台"),
   path: z.string().describe("文件相对路径"),
   ref: z.string().describe("分支、tag 或 commit sha"),
@@ -39,17 +43,15 @@ sourceApi.openapi(sourceRoute, async (c) => {
   const { repo_id, provider, path, ref } = c.req.valid("query");
 
   // repo_id 支持完整 id (provider:path_with_namespace)、path_with_namespace 或数字 ID
-  const scmRepoId = repo_id.includes(":")
-    ? repo_id.slice(repo_id.indexOf(":") + 1)
-    : repo_id;
+  const scmRepoId = repo_id.includes(":") ? repo_id.slice(repo_id.indexOf(":") + 1) : repo_id;
 
   let scm = null;
   logger({
-    type:'info',
-    title:'sourceApi called',
-    message:'sourceApi called',
-    addInfo: { repo_id, provider, path, ref }
-  })
+    type: "info",
+    title: "sourceApi called",
+    message: "sourceApi called",
+    addInfo: { repo_id, provider, path, ref },
+  });
   if (provider === "gitlab") {
     const base = getInfra(InfraKey.GITLAB_BASE_URL);
     const token = getInfra(InfraKey.GITLAB_PRIVATE_TOKEN);
@@ -73,9 +75,10 @@ sourceApi.openapi(sourceRoute, async (c) => {
       "Content-Type": "text/plain; charset=utf-8",
     });
   } catch (err: unknown) {
-    const status = err && typeof err === "object" && "response" in err
-      ? (err as { response?: { status?: number } }).response?.status
-      : undefined;
+    const status =
+      err && typeof err === "object" && "response" in err
+        ? (err as { response?: { status?: number } }).response?.status
+        : undefined;
     const msg = err instanceof Error ? err.message : String(err);
     if (status === 404 || msg.includes("404") || msg.includes("Not Found")) {
       return c.json({ error: "文件不存在" }, 404);

@@ -3,11 +3,7 @@ import { OpenAPIHono } from "@hono/zod-openapi";
 import { prisma } from "@/api/lib/prisma.ts";
 import { createScmAdapter } from "@/api/scm/index.ts";
 import { getInfra, InfraKey } from "@/api/lib/infra.ts";
-import {
-  RepoSchema,
-  CreateRepoSchema,
-  UpdateRepoSchema,
-} from "@/shared/schemas/repo.ts";
+import { RepoSchema, CreateRepoSchema, UpdateRepoSchema } from "@/shared/schemas/repo.ts";
 
 const IdParamSchema = z.object({
   id: z.string().openapi({ param: { name: "id", in: "path" } }),
@@ -101,7 +97,16 @@ const deleteRoute = createRoute({
 
 const reposApi = new OpenAPIHono();
 
-const toResponse = (r: { id: string; provider: string; pathWithNamespace: string; description: string; config: string; bu: string; createdAt: Date; updatedAt: Date }) => ({
+const toResponse = (r: {
+  id: string;
+  provider: string;
+  pathWithNamespace: string;
+  description: string;
+  config: string;
+  bu: string;
+  createdAt: Date;
+  updatedAt: Date;
+}) => ({
   ...r,
   createdAt: r.createdAt.toISOString(),
   updatedAt: r.updatedAt.toISOString(),

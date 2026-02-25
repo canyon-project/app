@@ -1,10 +1,5 @@
 import axios from "axios";
-import type {
-  ChangedFile,
-  CommitInfo,
-  CompareDiffItem,
-  RepoInfo,
-} from "./types.ts";
+import type { ChangedFile, CommitInfo, CompareDiffItem, RepoInfo } from "./types.ts";
 import type { ScmAdapter } from "./adapter.ts";
 
 type GitlabScmConfig = { type: "gitlab"; base: string; token: string };
@@ -73,11 +68,7 @@ export class GitlabAdapter implements ScmAdapter {
     };
   }
 
-  async getCompareDiffs(
-    repoID: string,
-    from: string,
-    to: string,
-  ): Promise<CompareDiffItem[]> {
+  async getCompareDiffs(repoID: string, from: string, to: string): Promise<CompareDiffItem[]> {
     const pid = encodeURIComponent(repoID);
     const url = `${this.base}/api/v4/projects/${pid}/repository/compare?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`;
     const { data } = await axios.get<{

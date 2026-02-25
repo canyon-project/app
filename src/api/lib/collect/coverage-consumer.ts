@@ -64,7 +64,8 @@ async function mergeLocalCoverageData(): Promise<void> {
 
       for (const item of items) {
         const p = item.payload;
-        if (!p?.buildHash || !p?.sceneKey || !p?.coverage || typeof p.coverage !== "object") continue;
+        if (!p?.buildHash || !p?.sceneKey || !p?.coverage || typeof p.coverage !== "object")
+          continue;
 
         buildHash = p.buildHash;
         sceneKey = p.sceneKey;
