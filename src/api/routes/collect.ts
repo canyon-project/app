@@ -1,0 +1,300 @@
+import { createRoute } from "@hono/zod-openapi";
+import { OpenAPIHono } from "@hono/zod-openapi";
+import { prisma } from "@/api/lib/prisma.ts";
+import { prisma as prismaSqlite } from "@/api/lib/prisma-sqlite.ts";
+import { generateObjectSignature, encodeObjectToCompressedBuffer } from "@/api/lib/collect/helpers.ts";
+import {
+  CoverageClientSchema,
+  CoverageMapInitSchema,
+} from "@/shared/schemas/coverage.ts";
+
+const coverageClientRoute = createRoute({
+  method: "post",
+  path: "/client",
+  request: {
+    body: {
+      content: {
+        "application/json": { schema: CoverageClientSchema },
+      },
+    },
+  },
+  responses: {
+    200: { description: "成功" },
+    400: { description: "参数错误" },
+    502: { description: "未找到 coverage 记录，请先调用 map/init" },
+  },
+});
+
+const coverageMapInitRoute = createRoute({
+  method: "post",
+  path: "/map/init",
+  request: {
+    body: {
+      content: {
+        "application/json": { schema: CoverageMapInitSchema },
+      },
+    },
+  },
+  responses: {
+    200: { description: "成功" },
+    400: { description: "Coverage 数据为空" },
+  },
+});
+
+const collectApi = new OpenAPIHono();
+
+collectApi.openapi(coverageClientRoute, async (c) => {
+  const body = c.req.valid("json");
+  const coverage = body.coverage;
+  const sceneKey = generateObjectSignature(body.scene || {});
+
+  const coverageValue = Object.values(coverage)[0] as Record<string, unknown> | undefined;
+  const buildHash = coverageValue?.buildHash as string | undefined;
+
+  if (!buildHash) {
+    return c.json({ success: false, message: "coverage 中缺少 buildHash" }, 400);
+  }
+
+  await prismaSqlite.coverageQueue.create({
+    data: {
+      payload: JSON.stringify({ coverage, buildHash, sceneKey }),
+      status: "PENDING",
+      pid: process.pid,
+    },
+  });
+
+  const prismacoverage = await prisma.coverage.findFirst({
+    where: { buildHash },
+  });
+
+  if (!prismacoverage) {
+    return c.json(
+      {
+        success: false,
+        message: "找不到对应的 coverage 记录，请先通过 /api/coverage/map/init 接口上传覆盖率映射数据",
+      },
+      502,
+    );
+  }
+
+  try {
+    const id = `${buildHash}|${sceneKey}`;
+    const scene = body.scene || {};
+    const builds = Array.isArray(prismacoverage.builds) ? prismacoverage.builds : [];
+
+    await prisma.coverage.create({
+      data: {
+        id,
+        buildHash: prismacoverage.buildHash,
+        provider: prismacoverage.provider,
+        repoID: prismacoverage.repoID,
+        sha: prismacoverage.sha,
+        buildTarget: prismacoverage.buildTarget,
+        instrumentCwd: prismacoverage.instrumentCwd,
+        sceneKey,
+        scene,
+        builds: builds as object,
+      },
+    });
+  } catch {
+    // 记录已存在时忽略
+  }
+
+  return c.json({
+    success: true,
+    buildHash,
+    sceneKey,
+    coverageLength: Object.keys(coverage).length,
+  });
+});
+
+function calculateBuildHash(
+  sha: string,
+  provider: string,
+  repoID: string,
+  instrumentCwd: string,
+  buildTarget?: string,
+): string {
+  return generateObjectSignature({
+    sha,
+    provider,
+    repoID,
+    instrumentCwd,
+    buildTarget: buildTarget || "",
+  });
+}
+
+function calculateSceneKey(scene: Record<string, unknown>): string {
+  return generateObjectSignature(scene);
+}
+
+collectApi.openapi(coverageMapInitRoute, async (c) => {
+  const body = c.req.valid("json");
+
+  const filteredCoverage: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(body.coverage)) {
+    if (value && typeof value === "object" && !("oldPath" in (value as object))) {
+      filteredCoverage[key] = value;
+    }
+  }
+
+  let sha = body.sha;
+  let provider = body.provider;
+  let repoID = body.repoID;
+  let instrumentCwd = body.instrumentCwd;
+  let buildTarget = body.buildTarget;
+
+  const coverageValues = Object.values(filteredCoverage);
+  if (coverageValues.length === 0) {
+    return c.json({
+      success: false,
+      message: "Coverage data is empty, cannot extract parameters.",
+    }, 400);
+  }
+
+  const firstEntry = coverageValues[0] as Record<string, unknown>;
+  if (firstEntry.sha !== undefined) sha = firstEntry.sha as string;
+  if (firstEntry.provider !== undefined) provider = firstEntry.provider as string;
+  if (firstEntry.repoID !== undefined) repoID = firstEntry.repoID as string;
+  if (firstEntry.instrumentCwd !== undefined && !instrumentCwd) instrumentCwd = firstEntry.instrumentCwd as string;
+  if (firstEntry.buildTarget !== undefined) buildTarget = firstEntry.buildTarget as string;
+
+  if (!sha || !provider || !repoID || !instrumentCwd) {
+    return c.json({
+      success: false,
+      message: "缺少必要参数：sha, provider, repoID, instrumentCwd",
+    }, 400);
+  }
+
+  const buildHash = calculateBuildHash(sha, provider, repoID, instrumentCwd, buildTarget);
+  const scene = {};
+  const sceneKey = calculateSceneKey(scene);
+  const id = `${buildHash}|${sceneKey}`;
+
+  const existingCoverage = await prisma.coverage.findUnique({ where: { id } });
+  const now = new Date();
+  const initialBuilds = body.build ? [body.build] : [];
+
+  let coverageCreateRes;
+  if (existingCoverage) {
+    const existingBuilds = Array.isArray(existingCoverage.builds) ? existingCoverage.builds : [];
+    const updatedBuilds = body.build ? [...existingBuilds, body.build] : existingBuilds;
+    coverageCreateRes = await prisma.coverage.update({
+      where: { id },
+      data: { builds: updatedBuilds, updatedAt: now },
+    });
+  } else {
+    coverageCreateRes = await prisma.coverage.create({
+      data: {
+        id,
+        buildHash,
+        provider,
+        repoID,
+        sha,
+        buildTarget: buildTarget || "",
+        instrumentCwd,
+        sceneKey,
+        scene,
+        builds: initialBuilds,
+      },
+    });
+  }
+
+  const commitId = `${provider}${repoID}${sha}`;
+  const existingCommit = await prisma.commit.findUnique({ where: { id: commitId } });
+  if (!existingCommit) {
+    try {
+      await prisma.commit.create({
+        data: {
+          id: commitId,
+          content: { sha, provider, repoID },
+        },
+      });
+    } catch {
+      // 忽略
+    }
+  }
+
+  const mapItems = Object.entries(filteredCoverage).map(([filePath, entry]) => {
+    const e = entry as Record<string, unknown>;
+    const chunkMap = {
+      statementMap: e.statementMap,
+      fnMap: e.fnMap,
+      branchMap: e.branchMap,
+    };
+    const coverageMapHash = generateObjectSignature(chunkMap);
+    const fileContentHash = (e.contentHash as string) || "";
+    const fullFilePath = filePath;
+    return {
+      map: chunkMap,
+      coverageMapHash,
+      fileContentHash,
+      fullFilePath,
+      restoreFullFilePath: "",
+      sourceMapHash: "",
+    };
+  });
+
+  for (const item of mapItems) {
+    const hash = `${item.coverageMapHash}|${item.fileContentHash}`;
+    try {
+      await prisma.coverageMap.upsert({
+        where: { hash },
+        create: {
+          hash,
+          map: encodeObjectToCompressedBuffer(item.map),
+          createdAt: now,
+        },
+        update: {},
+      });
+    } catch {
+      // skip
+    }
+  }
+
+  const relationItems = mapItems.map((item) => ({
+    id: `${buildHash}|${item.fullFilePath}`,
+    buildHash,
+    fullFilePath: item.fullFilePath,
+    restoreFullFilePath: item.restoreFullFilePath,
+    coverageMapHash: item.coverageMapHash,
+    sourceMapHash: item.sourceMapHash,
+    fileContentHash: item.fileContentHash,
+  }));
+
+  await prisma.coverageMapRelation.createMany({
+    data: relationItems,
+    skipDuplicates: true,
+  });
+
+  const hitEntities = Object.entries(filteredCoverage).map(([filePath, entry]) => {
+    const e = entry as Record<string, unknown>;
+    const s = (e?.s as object) || {};
+    const f = (e?.f as object) || {};
+    const sceneKeyHit = calculateSceneKey({});
+    return {
+      id: `${buildHash}|${sceneKeyHit}|${filePath}`,
+      sceneKey: sceneKeyHit,
+      buildHash,
+      rawFilePath: filePath,
+      s,
+      f,
+      b: {},
+      inputSourceMap: e.inputSourceMap ? 1 : 0,
+      createdAt: now,
+    };
+  });
+
+  await prisma.coverageHit.createMany({
+    data: hitEntities,
+    skipDuplicates: true,
+  });
+
+  return c.json({
+    success: true,
+    message: "Coverage map initialized",
+    data: coverageCreateRes,
+  });
+});
+
+export default collectApi;

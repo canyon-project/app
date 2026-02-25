@@ -5,11 +5,14 @@ import { serveStatic } from "@hono/node-server/serve-static";
 import { fileURLToPath } from "node:url";
 
 import { loadInfra } from "@/api/lib/infra";
+import { startCoverageConsumer } from "@/api/lib/collect/coverage-consumer.ts";
 import postsApi from "@/api/routes/posts.ts";
 import reposApi from "@/api/routes/repos.ts";
 import sourceApi from "@/api/routes/source.ts";
+import collectApi from "@/api/routes/collect.ts";
 
 await loadInfra();
+startCoverageConsumer();
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
 
@@ -20,6 +23,7 @@ const api = new OpenAPIHono();
 api.route("/posts", postsApi);
 api.route("/repos", reposApi);
 api.route("/source", sourceApi);
+api.route("/coverage", collectApi);
 
 api.doc("/doc", {
   openapi: "3.0.0",
