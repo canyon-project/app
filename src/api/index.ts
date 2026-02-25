@@ -7,6 +7,7 @@ import { fileURLToPath } from "node:url";
 import { loadInfra } from "@/api/lib/infra";
 import postsApi from "@/api/routes/posts.ts";
 import reposApi from "@/api/routes/repos.ts";
+import sourceApi from "@/api/routes/source.ts";
 
 await loadInfra();
 
@@ -18,6 +19,7 @@ const api = new OpenAPIHono();
 
 api.route("/posts", postsApi);
 api.route("/repos", reposApi);
+api.route("/source", sourceApi);
 
 api.doc("/doc", {
   openapi: "3.0.0",

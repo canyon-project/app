@@ -1,0 +1,81 @@
+import { createRoute, z } from "@hono/zod-openapi";
+import { OpenAPIHono } from "@hono/zod-openapi";
+import { createScmAdapter } from "@/api/scm/index.ts";
+import { getInfra, InfraKey } from "@/api/lib/infra.ts";
+
+const SourceQuerySchema = z.object({
+  repoId: z.string().describe("仓库 ID，格式 provider:pathWithNamespace，如 gitlab:owner/repo"),
+  path: z.string().describe("文件相对路径"),
+  ref: z.string().describe("分支、tag 或 commit sha"),
+});
+
+const sourceRoute = createRoute({
+  method: "get",
+  path: "/",
+  request: {
+    query: SourceQuerySchema,
+  },
+  responses: {
+    200: {
+      content: {
+        "text/plain": {
+          schema: z.string(),
+          description: "文件内容（UTF-8 文本）",
+        },
+      },
+      description: "成功",
+    },
+    400: { description: "参数错误" },
+    404: { description: "文件不存在" },
+    502: { description: "SCM 请求失败" },
+  },
+});
+
+const sourceApi = new OpenAPIHono();
+
+sourceApi.openapi(sourceRoute, async (c) => {
+  const { repoId, path, ref } = c.req.valid("query");
+
+  const colonIndex = repoId.indexOf(":");
+  if (colonIndex <= 0) {
+    return c.json({ error: "repoId 格式应为 provider:pathWithNamespace" }, 400);
+  }
+  const provider = repoId.slice(0, colonIndex).toLowerCase();
+  const pathWithNamespace = repoId.slice(colonIndex + 1);
+
+  let scm = null;
+  if (provider === "gitlab") {
+    const base = getInfra(InfraKey.GITLAB_BASE_URL);
+    const token = getInfra(InfraKey.GITLAB_PRIVATE_TOKEN);
+    if (!base || !token || token === "-") {
+      return c.json({ error: "GitLab 未配置 GITLAB_BASE_URL 或 GITLAB_PRIVATE_TOKEN" }, 502);
+    }
+    scm = createScmAdapter({ type: "gitlab", base, token });
+  } else if (provider === "github") {
+    const token = getInfra(InfraKey.GITHUB_PRIVATE_TOKEN);
+    if (!token || token === "-") {
+      return c.json({ error: "GitHub 未配置 GITHUB_PRIVATE_TOKEN" }, 502);
+    }
+    scm = createScmAdapter({ type: "github", token });
+  } else {
+    return c.json({ error: `不支持的 provider: ${provider}` }, 400);
+  }
+
+  try {
+    const content = await scm.getFileContent(pathWithNamespace, path, ref);
+    return c.text(content, 200, {
+      "Content-Type": "text/plain; charset=utf-8",
+    });
+  } catch (err: unknown) {
+    const status = err && typeof err === "object" && "response" in err
+      ? (err as { response?: { status?: number } }).response?.status
+      : undefined;
+    const msg = err instanceof Error ? err.message : String(err);
+    if (status === 404 || msg.includes("404") || msg.includes("Not Found")) {
+      return c.json({ error: "文件不存在" }, 404);
+    }
+    return c.json({ error: "SCM 请求失败", detail: msg }, 502);
+  }
+});
+
+export default sourceApi;

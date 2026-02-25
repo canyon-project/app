@@ -29,4 +29,8 @@ export default defineConfig({
       // '@canyonjs/report-component': path.resolve(__dirname, '../../packages/report-component/src'),
     },
   },
+  server: {
+    port: 8000,
+    host:'0.0.0.0',
+  },
 });
