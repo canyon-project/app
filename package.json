@@ -75,7 +75,7 @@
     "pre-commit": "npx nano-staged"
   },
   "nano-staged": {
-    "*.{js,jsx,ts,tsx,mjs,cjs}": "npm run lint",
-    "*": "oxfmt --no-error-on-unmatched-pattern"
+    "*.{js,jsx,ts,tsx,mjs,cjs}": "npm run lint:fix",
+    "*": "oxfmt"
   }
 }
