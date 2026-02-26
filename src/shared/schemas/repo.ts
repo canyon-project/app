@@ -11,6 +11,8 @@ export const RepoSchema = z
     bu: z.string(),
     createdAt: z.string().datetime(),
     updatedAt: z.string().datetime(),
+    reportTimes: z.number().optional(),
+    lastReportTime: z.string().datetime().nullable().optional(),
   })
   .openapi("Repo");
 

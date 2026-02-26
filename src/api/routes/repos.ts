@@ -144,19 +144,26 @@ const deleteRoute = createRoute({
 
 const reposApi = new OpenAPIHono();
 
-const toResponse = (r: {
-  id: string;
-  provider: string;
-  pathWithNamespace: string;
-  description: string;
-  config: string;
-  bu: string;
-  createdAt: Date;
-  updatedAt: Date;
-}) => ({
+const toResponse = (
+  r: {
+    id: string;
+    provider: string;
+    pathWithNamespace: string;
+    description: string;
+    config: string;
+    bu: string;
+    createdAt: Date;
+    updatedAt: Date;
+  },
+  extra?: { reportTimes?: number; lastReportTime?: Date | null },
+) => ({
   ...r,
   createdAt: r.createdAt.toISOString(),
   updatedAt: r.updatedAt.toISOString(),
+  ...(extra && {
+    reportTimes: extra.reportTimes ?? 0,
+    lastReportTime: extra.lastReportTime?.toISOString() ?? null,
+  }),
 });
 
 reposApi.openapi(checkRoute, async (c) => {
@@ -212,11 +219,45 @@ reposApi.openapi(listRoute, async (c) => {
       { pathWithNamespace: { contains: query.search } },
     ];
   }
-  const repos = await prisma.repo.findMany({
-    where,
-    orderBy: { updatedAt: "desc" },
+  const rows = await prisma.repo.findMany({ where });
+
+  const repoIdsForCoverage = rows.map((r) => r.id.split("-")[1] ?? r.id);
+
+  const coverageStats = await prisma.coverage.groupBy({
+    by: ["repoID"],
+    where: { repoID: { in: repoIdsForCoverage } },
+    _count: { id: true },
+    _max: { createdAt: true },
   });
-  return c.json(repos.map(toResponse));
+
+  const statsMap = new Map(
+    coverageStats.map((s) => [
+      s.repoID,
+      { count: s._count.id, lastReportTime: s._max.createdAt },
+    ]),
+  );
+
+  const reposWithStats = rows.map((r) => {
+    const repoID = r.id.split("-")[1] ?? r.id;
+    const stats = statsMap.get(repoID);
+    return toResponse(r, {
+      reportTimes: stats?.count ?? 0,
+      lastReportTime: stats?.lastReportTime ?? null,
+    });
+  });
+
+  
+
+  reposWithStats.sort((a, b) => {
+    const aTime = a.lastReportTime ? new Date(a.lastReportTime).getTime() : 0;
+    const bTime = b.lastReportTime ? new Date(b.lastReportTime).getTime() : 0;
+    if (aTime && bTime) return bTime - aTime;
+    if (aTime && !bTime) return -1;
+    if (!aTime && bTime) return 1;
+    return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+  });
+
+  return c.json(reposWithStats);
 });
 
 reposApi.openapi(getRoute, async (c) => {
