@@ -24,9 +24,10 @@ const sourceRoute = createRoute({
   responses: {
     200: {
       content: {
-        "text/plain": {
-          schema: z.string(),
-          description: "文件内容（UTF-8 文本）",
+        "application/json": {
+          schema: z.object({
+            content: z.string().describe("Base64 编码的文件内容"),
+          }),
         },
       },
       description: "成功",
@@ -71,9 +72,8 @@ sourceApi.openapi(sourceRoute, async (c) => {
 
   try {
     const content = await scm.getFileContent(scmRepoId, path, ref);
-    return c.text(content, 200, {
-      "Content-Type": "text/plain; charset=utf-8",
-    });
+    const encoded = Buffer.from(content, "utf-8").toString("base64");
+    return c.json({ content: encoded });
   } catch (err: unknown) {
     const status =
       err && typeof err === "object" && "response" in err

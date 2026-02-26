@@ -5,8 +5,8 @@ import { Spin } from 'antd';
 import axios from 'axios';
 import { useCallback, useMemo, useRef } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { getDecode } from '@/helpers/getDecode.ts';
-import { getRepoIDFromId } from '@/helpers/repo';
+import { getDecode } from "@/helpers/getDecode";
+import { getRepoIDFromId } from "@/helpers/repo";
 import { getRepo } from '@/services/repo';
 
 // ==================== 类型定义 ====================
@@ -244,20 +244,17 @@ const ReportIndependent = () => {
         fileContentPromise = fileContentCacheRef.current.get(fileContentKey)!;
       } else if (sha) {
         fileContentPromise = axios
-          .get('/api/code/file', {
+          .get("/api/source", {
             params: {
-              repoID,
-              sha,
-              filepath: val,
+              repo_id: repoID,
               provider: routeParams.provider,
+              path: val,
+              ref: sha,
             },
           })
-          .then((resp) => {
-            if (resp.data?.content) {
-              return getDecode(resp.data.content);
-            }
-            return '';
-          });
+          .then((resp) =>
+            resp.data?.content ? getDecode(resp.data.content) : "",
+          );
         if (fileContentKey) {
           fileContentCacheRef.current.set(fileContentKey, fileContentPromise);
         }
@@ -267,23 +264,7 @@ const ReportIndependent = () => {
         if (fileContentCacheRef.current.has(pullFileContentKey)) {
           fileContentPromise = fileContentCacheRef.current.get(pullFileContentKey)!;
         } else {
-          fileContentPromise = axios
-            .get('/api/code/file', {
-              params: {
-                repoID,
-                subject: routeParams.subject,
-                subjectID: routeParams.subjectID,
-                filepath: val,
-                provider: routeParams.provider,
-              },
-            })
-            .then((resp) => {
-              if (resp.data?.content) {
-                return getDecode(resp.data.content);
-              }
-              return '';
-            });
-          fileContentCacheRef.current.set(pullFileContentKey, fileContentPromise);
+          fileContentPromise = Promise.resolve("");
         }
       } else {
         fileContentPromise = Promise.resolve('');
