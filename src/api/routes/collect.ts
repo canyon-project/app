@@ -11,6 +11,9 @@ import { CoverageClientSchema, CoverageMapInitSchema } from "@/shared/schemas/co
 const coverageClientRoute = createRoute({
   method: "post",
   path: "/client",
+  summary: "上报覆盖率数据",
+  description: "客户端上报覆盖率数据。需先调用 /map/init 初始化 coverage 映射。coverage 中需包含 buildHash。",
+  tags: ["覆盖率"],
   request: {
     body: {
       content: {
@@ -28,6 +31,9 @@ const coverageClientRoute = createRoute({
 const coverageMapInitRoute = createRoute({
   method: "post",
   path: "/map/init",
+  summary: "初始化覆盖率映射",
+  description: "上传覆盖率 map 数据，建立 buildHash 与文件映射关系。需提供 coverage、sha、provider、repoID、instrumentCwd 等。",
+  tags: ["覆盖率"],
   request: {
     body: {
       content: {

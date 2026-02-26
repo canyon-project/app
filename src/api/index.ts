@@ -7,7 +7,7 @@ import { fileURLToPath } from "node:url";
 import { loadInfra } from "@/api/lib/infra";
 import { initPrismaSqlite } from "@/api/lib/prisma-sqlite.ts";
 import { startCoverageConsumer } from "@/api/lib/collect/coverage-consumer.ts";
-import postsApi from "@/api/routes/posts.ts";
+
 import reposApi from "@/api/routes/repos.ts";
 import sourceApi from "@/api/routes/source.ts";
 import collectApi from "@/api/routes/collect.ts";
@@ -24,7 +24,7 @@ const app = new Hono();
 
 const api = new OpenAPIHono();
 
-api.route("/posts", postsApi);
+
 api.route("/repos", reposApi);
 api.route("/source", sourceApi);
 api.route("/coverage", collectApi);
@@ -35,6 +35,7 @@ api.doc("/doc", {
   info: {
     version: "1.0.0",
     title: "API",
+    description: "全栈 Web 应用 API，包含文章、仓库、源码、覆盖率等模块。",
   },
 });
 

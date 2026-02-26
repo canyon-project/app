@@ -31,22 +31,22 @@ export const CoverageMapInitSchema = z
 /** GET /api/coverage/map、/api/coverage/summary/map 查询参数（subject=commit） */
 export const CoverageMapQuerySchema = z
   .object({
-    subject: z.literal("commit"),
-    subjectID: z.string().describe("commit sha"),
-    provider: z.enum(["gitlab", "github"]),
-    repoID: z.string(),
-    buildTarget: z.string().optional().default(""),
-    filePath: z.string().optional(),
-    scene: z.string().optional(),
+    subject: z.literal("commit").openapi({ param: { name: "subject", in: "query" } }),
+    subjectID: z.string().openapi({ param: { name: "subjectID", in: "query" } }),
+    provider: z.enum(["gitlab", "github"]).openapi({ param: { name: "provider", in: "query" } }),
+    repoID: z.string().openapi({ param: { name: "repoID", in: "query" } }),
+    buildTarget: z.string().optional().default("").openapi({ param: { name: "buildTarget", in: "query" } }),
+    filePath: z.string().optional().openapi({ param: { name: "filePath", in: "query" } }),
+    scene: z.string().optional().openapi({ param: { name: "scene", in: "query" } }),
   })
   .openapi("CoverageMapQuery");
 
 /** GET /api/coverage/commits 查询参数 */
 export const CoverageCommitsQuerySchema = z
   .object({
-    repoID: z.string().describe("仓库 ID，支持数字 ID 或 pathWithNamespace"),
-    page: z.coerce.number().optional().default(1),
-    pageSize: z.coerce.number().optional().default(10),
+    repoID: z.string().openapi({ param: { name: "repoID", in: "query" } }),
+    page: z.coerce.number().optional().default(1).openapi({ param: { name: "page", in: "query" } }),
+    pageSize: z.coerce.number().optional().default(10).openapi({ param: { name: "pageSize", in: "query" } }),
   })
   .openapi("CoverageCommitsQuery");
 

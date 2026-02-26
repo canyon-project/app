@@ -7,17 +7,18 @@ import { logger } from "@/api/logger";
 const SourceQuerySchema = z.object({
   repo_id: z
     .string()
-    .describe(
-      "仓库 ID，支持：1) 完整 id 如 gitlab:owner/repo 2) path_with_namespace 如 owner/repo 3) 平台数字 ID",
-    ),
-  provider: z.enum(["gitlab", "github"]).describe("SCM 平台"),
-  path: z.string().describe("文件相对路径"),
-  ref: z.string().describe("分支、tag 或 commit sha"),
+    .openapi({ param: { name: "repo_id", in: "query" } }),
+  provider: z.enum(["gitlab", "github"]).openapi({ param: { name: "provider", in: "query" } }),
+  path: z.string().openapi({ param: { name: "path", in: "query" } }),
+  ref: z.string().openapi({ param: { name: "ref", in: "query" } }),
 });
 
 const sourceRoute = createRoute({
   method: "get",
   path: "/",
+  summary: "获取文件内容",
+  description: "从 GitLab/GitHub 获取指定仓库、路径、ref 下的文件内容。返回 Base64 编码的 content，前端需用 getDecode 解码。",
+  tags: ["源码"],
   request: {
     query: SourceQuerySchema,
   },

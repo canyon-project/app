@@ -12,6 +12,9 @@ const IdParamSchema = z.object({
 const checkRoute = createRoute({
   method: "get",
   path: "/check",
+  summary: "校验仓库信息",
+  description: "从 GitLab/GitHub 拉取仓库信息，用于添加仓库前的校验。需提供 repoID（平台数字 ID）和 provider。",
+  tags: ["仓库"],
   request: {
     query: z.object({
       repoID: z.string().openapi({ param: { name: "repoID", in: "query" } }),
@@ -38,6 +41,9 @@ const checkRoute = createRoute({
 const buRoute = createRoute({
   method: "get",
   path: "/bu",
+  summary: "获取 Bu 列表",
+  description: "返回所有已配置的 Bu（业务单元）列表，用于筛选仓库。",
+  tags: ["仓库"],
   responses: {
     200: {
       content: {
@@ -51,13 +57,14 @@ const buRoute = createRoute({
 const listRoute = createRoute({
   method: "get",
   path: "/",
+  summary: "获取仓库列表",
+  description: "返回所有仓库，支持按 bu 筛选、按 id/pathWithNamespace 搜索。附带覆盖率统计（reportTimes、lastReportTime）。",
+  tags: ["仓库"],
   request: {
-    query: z
-      .object({
-        bu: z.string().optional(),
-        search: z.string().optional(),
-      })
-      .optional(),
+    query: z.object({
+      bu: z.string().optional().openapi({ param: { name: "bu", in: "query" } }),
+      search: z.string().optional().openapi({ param: { name: "search", in: "query" } }),
+    }),
   },
   responses: {
     200: {
@@ -74,6 +81,9 @@ const listRoute = createRoute({
 const getRoute = createRoute({
   method: "get",
   path: "/{id}",
+  summary: "获取仓库详情",
+  description: "根据 id（支持完整 id、pathWithNamespace 或数字 ID）返回仓库详情。会尝试从 SCM 拉取最新 description。",
+  tags: ["仓库"],
   request: { params: IdParamSchema },
   responses: {
     200: {
@@ -89,6 +99,9 @@ const getRoute = createRoute({
 const createRouteDef = createRoute({
   method: "post",
   path: "/",
+  summary: "创建仓库",
+  description: "将 GitLab/GitHub 仓库添加到系统中，需提供 provider、pathWithNamespace。",
+  tags: ["仓库"],
   request: {
     body: {
       content: {
@@ -111,6 +124,9 @@ const createRouteDef = createRoute({
 const updateRoute = createRoute({
   method: "put",
   path: "/{id}",
+  summary: "更新仓库",
+  description: "更新仓库的 description、config、bu 等配置。",
+  tags: ["仓库"],
   request: {
     params: IdParamSchema,
     body: {
@@ -135,6 +151,9 @@ const updateRoute = createRoute({
 const deleteRoute = createRoute({
   method: "delete",
   path: "/{id}",
+  summary: "删除仓库",
+  description: "从系统中移除指定仓库。",
+  tags: ["仓库"],
   request: { params: IdParamSchema },
   responses: {
     204: { description: "删除成功" },

@@ -76,6 +76,12 @@ export const RepoSchema = z.object({ ... }).openapi("Repo");
 export type Repo = z.infer<typeof RepoSchema>;
 ```
 
+## AI 编码规范
+
+- **OpenAPI 参数**：使用 `@hono/zod-openapi` 时，query/path 参数必须显式声明 `.openapi({ param: { name: "xxx", in: "query" } })` 或 `in: "path"`，否则会报 `Missing parameter data`。
+- **敏感数据编码**：涉及文件内容等敏感数据的 API，返回 JSON 时用 `{ content: base64EncodedString }`，不在网络传输明文；前端用 `getDecode`（`@/helpers/getDecode`）解码。
+- **响应格式**：API 统一返回 JSON，按 OpenAPI schema 定义；错误用 `c.json({ error: "..." }, status)`。
+
 ## 代码规范
 
 - 使用 TypeScript，严格模式

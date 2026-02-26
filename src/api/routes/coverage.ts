@@ -12,6 +12,9 @@ import { genSummaryMapByCoverageMap } from "canyon-data";
 const coverageMapGetRoute = createRoute({
   method: "get",
   path: "/map",
+  summary: "获取覆盖率 Map",
+  description: "根据 subject=commit、subjectID（sha）、provider、repoID 等获取指定 commit 的覆盖率 map 数据。",
+  tags: ["覆盖率"],
   request: { query: CoverageMapQuerySchema },
   responses: {
     200: { description: "覆盖率 map" },
@@ -22,6 +25,9 @@ const coverageMapGetRoute = createRoute({
 const coverageSummaryMapRoute = createRoute({
   method: "get",
   path: "/summary/map",
+  summary: "获取覆盖率 Summary Map",
+  description: "获取指定 commit 的覆盖率汇总 map，用于报告展示。参数同 /map。",
+  tags: ["覆盖率"],
   request: { query: CoverageMapQuerySchema },
   responses: {
     200: { description: "覆盖率 summary map" },
@@ -32,6 +38,9 @@ const coverageSummaryMapRoute = createRoute({
 const coverageCommitsRoute = createRoute({
   method: "get",
   path: "/commits",
+  summary: "获取 Commits 列表",
+  description: "根据 repoID 获取该仓库下有覆盖率数据的 commits 列表，支持分页（page、pageSize）。",
+  tags: ["覆盖率"],
   request: { query: CoverageCommitsQuerySchema },
   responses: {
     200: { description: "commits 列表" },
