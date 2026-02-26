@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "prisma generate && vite build --mode client && vite build",
+    "build": "npm run generate && vite build --mode client && vite build",
     "build:client": "vite build --mode client",
     "build:server": "vite build",
     "start": "node dist/index.js",
@@ -17,7 +17,8 @@
     "postinstall": "npm run generate",
     "preinstall": "node ./scripts/check.mjs",
     "migrate:sql": "prisma migrate diff --from-empty --to-schema-datamodel ./prisma/schema.prisma --script > ./schema.sql",
-    "prepare": "npm run build && simple-git-hooks"
+    "prepare": "npm run build && simple-git-hooks",
+    "clean": "node scripts/clean.mjs"
   },
   "dependencies": {
     "@ant-design/icons": "^6.1.0",
