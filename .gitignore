@@ -38,3 +38,5 @@ old
 
 
 prisma/local.db
+
+schema.sql

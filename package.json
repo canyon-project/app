@@ -71,7 +71,6 @@
     "pre-commit": "npx nano-staged"
   },
   "nano-staged": {
-    "*.{js,jsx,ts,tsx,mjs,cjs}": "npm run lint:fix",
-    "*": "oxfmt"
+    "*.{js,jsx,ts,tsx,mjs,cjs}": "npm run lint:fix && npm run fmt"
   }
 }
