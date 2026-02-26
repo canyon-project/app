@@ -11,6 +11,7 @@ import postsApi from "@/api/routes/posts.ts";
 import reposApi from "@/api/routes/repos.ts";
 import sourceApi from "@/api/routes/source.ts";
 import collectApi from "@/api/routes/collect.ts";
+import coverageApi from "@/api/routes/coverage.ts";
 import { historyApiFallback } from "hono-history-api-fallback";
 
 await loadInfra();
@@ -27,6 +28,7 @@ api.route("/posts", postsApi);
 api.route("/repos", reposApi);
 api.route("/source", sourceApi);
 api.route("/coverage", collectApi);
+api.route("/coverage", coverageApi);
 
 api.doc("/doc", {
   openapi: "3.0.0",

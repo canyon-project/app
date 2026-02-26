@@ -9,9 +9,56 @@ const IdParamSchema = z.object({
   id: z.string().openapi({ param: { name: "id", in: "path" } }),
 });
 
+const checkRoute = createRoute({
+  method: "get",
+  path: "/check",
+  request: {
+    query: z.object({
+      repoID: z.string().openapi({ param: { name: "repoID", in: "query" } }),
+      provider: z.enum(["github", "gitlab"]).openapi({ param: { name: "provider", in: "query" } }),
+    }),
+  },
+  responses: {
+    200: {
+      content: {
+        "application/json": {
+          schema: z.object({
+            repoID: z.string(),
+            pathWithNamespace: z.string(),
+            description: z.string(),
+          }),
+        },
+      },
+      description: "仓库信息",
+    },
+    400: { description: "配置缺失或请求失败" },
+  },
+});
+
+const buRoute = createRoute({
+  method: "get",
+  path: "/bu",
+  responses: {
+    200: {
+      content: {
+        "application/json": { schema: z.array(z.string()) },
+      },
+      description: "所有 Bu 列表",
+    },
+  },
+});
+
 const listRoute = createRoute({
   method: "get",
   path: "/",
+  request: {
+    query: z
+      .object({
+        bu: z.string().optional(),
+        search: z.string().optional(),
+      })
+      .optional(),
+  },
   responses: {
     200: {
       content: {
@@ -112,8 +159,61 @@ const toResponse = (r: {
   updatedAt: r.updatedAt.toISOString(),
 });
 
+reposApi.openapi(checkRoute, async (c) => {
+  const { repoID, provider } = c.req.valid("query");
+  const p = provider.toLowerCase();
+  let scm = null;
+  if (p === "gitlab") {
+    const base = getInfra(InfraKey.GITLAB_BASE_URL);
+    const token = getInfra(InfraKey.GITLAB_PRIVATE_TOKEN);
+    if (!base || !token || token === "-") {
+      return c.json({ error: "GitLab 配置缺失" }, 400);
+    }
+    scm = createScmAdapter({ type: "gitlab", base, token });
+  } else if (p === "github") {
+    const token = getInfra(InfraKey.GITHUB_PRIVATE_TOKEN);
+    if (!token || token === "-") {
+      return c.json({ error: "GitHub 配置缺失" }, 400);
+    }
+    scm = createScmAdapter({ type: "github", token });
+  } else {
+    return c.json({ error: `不支持的 provider: ${provider}` }, 400);
+  }
+  try {
+    const info = await scm.getRepoInfo(repoID.trim());
+    return c.json({
+      repoID: info.id,
+      pathWithNamespace: info.pathWithNamespace,
+      description: info.description ?? "",
+    });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "获取仓库信息失败";
+    return c.json({ error: msg }, 400);
+  }
+});
+
+reposApi.openapi(buRoute, async (c) => {
+  const rows = await prisma.repo.findMany({
+    select: { bu: true },
+    distinct: ["bu"],
+    where: { bu: { not: "" } },
+    orderBy: { bu: "asc" },
+  });
+  return c.json(rows.map((r) => r.bu).filter(Boolean));
+});
+
 reposApi.openapi(listRoute, async (c) => {
+  const query = c.req.valid("query");
+  const where: { bu?: string; OR?: Array<{ id?: { contains: string }; pathWithNamespace?: { contains: string } }> } = {};
+  if (query?.bu) where.bu = query.bu;
+  if (query?.search) {
+    where.OR = [
+      { id: { contains: query.search } },
+      { pathWithNamespace: { contains: query.search } },
+    ];
+  }
   const repos = await prisma.repo.findMany({
+    where,
     orderBy: { updatedAt: "desc" },
   });
   return c.json(repos.map(toResponse));
@@ -121,9 +221,17 @@ reposApi.openapi(listRoute, async (c) => {
 
 reposApi.openapi(getRoute, async (c) => {
   const { id } = c.req.valid("param");
-  const repo = await prisma.repo.findUnique({
-    where: { id },
-  });
+  const decodedId = decodeURIComponent(id);
+  let repo = null;
+  if (decodedId.includes("/")) {
+    repo = await prisma.repo.findFirst({
+      where: { pathWithNamespace: decodedId },
+    });
+  } else {
+    repo = await prisma.repo.findUnique({
+      where: { id: decodedId },
+    });
+  }
   if (!repo) {
     return c.json({ error: "Not found" }, 404);
   }
@@ -175,12 +283,28 @@ reposApi.openapi(createRouteDef, async (c) => {
   return c.json(toResponse(repo), 201);
 });
 
+async function resolveRepoId(id: string): Promise<string | null> {
+  const decodedId = decodeURIComponent(id);
+  if (decodedId.includes("/")) {
+    const repo = await prisma.repo.findFirst({
+      where: { pathWithNamespace: decodedId },
+    });
+    return repo?.id ?? null;
+  }
+  const repo = await prisma.repo.findUnique({
+    where: { id: decodedId },
+  });
+  return repo?.id ?? null;
+}
+
 reposApi.openapi(updateRoute, async (c) => {
   const { id } = c.req.valid("param");
   const body = c.req.valid("json");
+  const resolvedId = await resolveRepoId(id);
+  if (!resolvedId) return c.json({ error: "Not found" }, 404);
   try {
     const repo = await prisma.repo.update({
-      where: { id },
+      where: { id: resolvedId },
       data: {
         ...(body.description !== undefined && { description: body.description }),
         ...(body.config !== undefined && { config: body.config }),
@@ -196,9 +320,11 @@ reposApi.openapi(updateRoute, async (c) => {
 
 reposApi.openapi(deleteRoute, async (c) => {
   const { id } = c.req.valid("param");
+  const resolvedId = await resolveRepoId(id);
+  if (!resolvedId) return c.json({ error: "Not found" }, 404);
   try {
     await prisma.repo.delete({
-      where: { id },
+      where: { id: resolvedId },
     });
     return c.body(null, 204);
   } catch {

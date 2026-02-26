@@ -26,3 +26,19 @@ export function encodeObjectToCompressedBuffer(object: unknown): Buffer {
   const buffer = Buffer.from(jsonString, "utf-8");
   return zlib.gzipSync(buffer);
 }
+
+export function decodeCompressedObject(
+  compressedBuffer: Buffer | Uint8Array,
+): unknown {
+  try {
+    const decompressedBuffer = zlib.gunzipSync(
+      Buffer.isBuffer(compressedBuffer)
+        ? compressedBuffer
+        : Buffer.from(compressedBuffer),
+    );
+    return JSON.parse(decompressedBuffer.toString("utf-8"));
+  } catch (error) {
+    console.error("解码过程中出现错误:", error);
+    return null;
+  }
+}

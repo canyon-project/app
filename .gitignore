@@ -27,7 +27,7 @@ dist-ssr
 pnpm-lock.yaml
 
 
-coverage
+/coverage
 
 generated
 
