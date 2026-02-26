@@ -13,6 +13,10 @@ import sourceApi from "@/api/routes/source.ts";
 import collectApi from "@/api/routes/collect.ts";
 import coverageApi from "@/api/routes/coverage.ts";
 import { historyApiFallback } from "hono-history-api-fallback";
+import {setupConsoleErrorCapture, setupGlobalErrorHandlers} from "@/api/logger";
+
+setupConsoleErrorCapture(); // 先重写 console.error
+setupGlobalErrorHandlers();
 
 await loadInfra();
 await initPrismaSqlite();
