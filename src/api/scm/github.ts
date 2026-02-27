@@ -96,6 +96,20 @@ export class GithubAdapter implements ScmAdapter {
     };
   }
 
+  async getCommitsBetween(repoID: string, fromSha: string, toSha: string): Promise<string[]> {
+    const { owner, repo } = await this.resolveOwnerRepo(repoID);
+    const url = `${this.base}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/compare/${encodeURIComponent(fromSha)}...${encodeURIComponent(toSha)}`;
+    const { data } = await axios.get<{ commits?: Array<{ sha?: string }> }>(url, {
+      headers: this.headers(),
+      timeout: 10000,
+    });
+    const commits = data?.commits ?? [];
+    const shas = commits.map((c) => c.sha).filter(Boolean) as string[];
+    if (!shas.includes(fromSha)) shas.unshift(fromSha);
+    if (!shas.includes(toSha)) shas.push(toSha);
+    return shas;
+  }
+
   async getCompareDiffs(repoID: string, from: string, to: string): Promise<CompareDiffItem[]> {
     const { owner, repo } = await this.resolveOwnerRepo(repoID);
     const url = `${this.base}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/compare/${encodeURIComponent(from)}...${encodeURIComponent(to)}`;

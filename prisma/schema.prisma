@@ -40,6 +40,7 @@ model Commit {
   @@map("canyon_app_commit")
 }
 
+// GitHub PR | GitLab Merge Request（PR/MR 信息，用于 pull/merge_requests 覆盖率）
 model MergeRequest {
   id      String @id
   content Json

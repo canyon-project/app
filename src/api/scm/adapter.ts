@@ -10,6 +10,9 @@ export interface ScmAdapter {
   /** 获取 base..head 之间变更的文件列表 */
   getChangedFiles(repoID: string, base: string, head: string): Promise<ChangedFile[]>;
 
+  /** 获取 from..to 之间的 commit sha 列表（含 from、to，按时间从旧到新） */
+  getCommitsBetween(repoID: string, fromSha: string, toSha: string): Promise<string[]>;
+
   /** 获取单次 commit 信息（parent_ids、stats），用于 diff 计算 */
   getCommitInfo(repoID: string, sha: string): Promise<CommitInfo>;
 

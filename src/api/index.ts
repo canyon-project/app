@@ -30,6 +30,7 @@ const api = new OpenAPIHono();
 
 api.route("/repos", reposApi);
 api.route("/source", sourceApi);
+api.route("/code", sourceApi); // 兼容旧前端 /api/code/diff 等
 api.route("/coverage", collectApi);
 api.route("/coverage", coverageApi);
 

@@ -246,13 +246,28 @@ const ReportIndependent = () => {
         if (fileContentKey) {
           fileContentCacheRef.current.set(fileContentKey, fileContentPromise);
         }
-      } else if (routeParams.subject === "pull" && routeParams.subjectID) {
-        // pull 类型：传递 subject 和 subjectID，后端会从 cr 表查询 head repoID 和 head sha
-        const pullFileContentKey = `${repoID}-pull-${routeParams.subjectID}-${val}-${routeParams.provider}`;
+      } else if (
+        (routeParams.subject === "pull" || routeParams.subject === "merge_requests") &&
+        routeParams.subjectID
+      ) {
+        const pullFileContentKey = `${repoID}-${routeParams.subject}-${routeParams.subjectID}-${val}-${routeParams.provider}`;
         if (fileContentCacheRef.current.has(pullFileContentKey)) {
           fileContentPromise = fileContentCacheRef.current.get(pullFileContentKey)!;
         } else {
-          fileContentPromise = Promise.resolve("");
+          fileContentPromise = axios
+            .get("/api/source", {
+              params: {
+                repo_id: repoID,
+                provider: routeParams.provider,
+                path: val,
+                subject: routeParams.subject,
+                subjectID: routeParams.subjectID,
+              },
+            })
+            .then((resp) => (resp.data?.content ? getDecode(resp.data.content) : ""));
+        }
+        if (pullFileContentKey) {
+          fileContentCacheRef.current.set(pullFileContentKey, fileContentPromise);
         }
       } else {
         fileContentPromise = Promise.resolve("");

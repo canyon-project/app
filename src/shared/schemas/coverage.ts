@@ -28,10 +28,12 @@ export const CoverageMapInitSchema = z
   })
   .openapi("CoverageMapInit");
 
-/** GET /api/coverage/map、/api/coverage/summary/map 查询参数（subject=commit） */
+/** GET /api/coverage/map、/api/coverage/summary/map 查询参数 */
 export const CoverageMapQuerySchema = z
   .object({
-    subject: z.literal("commit").openapi({ param: { name: "subject", in: "query" } }),
+    subject: z
+      .enum(["commit", "pull", "merge_requests", "accumulative"])
+      .openapi({ param: { name: "subject", in: "query" } }),
     subjectID: z.string().openapi({ param: { name: "subjectID", in: "query" } }),
     provider: z.enum(["gitlab", "github"]).openapi({ param: { name: "provider", in: "query" } }),
     repoID: z.string().openapi({ param: { name: "repoID", in: "query" } }),

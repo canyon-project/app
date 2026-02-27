@@ -5,7 +5,7 @@ import react from "@vitejs/plugin-react-swc";
 import Pages from "vite-plugin-pages";
 import tailwindcss from "@tailwindcss/vite";
 import path from "path";
-import {copyPrismaEngines} from "./copyPrismaEngines.ts";
+import { copyPrismaEngines } from "./copyPrismaEngines.ts";
 
 export default defineConfig({
   build: {

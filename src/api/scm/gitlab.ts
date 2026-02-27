@@ -68,6 +68,20 @@ export class GitlabAdapter implements ScmAdapter {
     };
   }
 
+  async getCommitsBetween(repoID: string, fromSha: string, toSha: string): Promise<string[]> {
+    const pid = encodeURIComponent(repoID);
+    const url = `${this.base}/api/v4/projects/${pid}/repository/compare?from=${encodeURIComponent(fromSha)}&to=${encodeURIComponent(toSha)}`;
+    const { data } = await axios.get<{ commits?: Array<{ id?: string }> }>(url, {
+      headers: this.headers(),
+      timeout: 10000,
+    });
+    const commits = data?.commits ?? [];
+    const shas = commits.map((c) => c.id).filter(Boolean) as string[];
+    if (!shas.includes(fromSha)) shas.unshift(fromSha);
+    if (!shas.includes(toSha)) shas.push(toSha);
+    return shas;
+  }
+
   async getCompareDiffs(repoID: string, from: string, to: string): Promise<CompareDiffItem[]> {
     const pid = encodeURIComponent(repoID);
     const url = `${this.base}/api/v4/projects/${pid}/repository/compare?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`;

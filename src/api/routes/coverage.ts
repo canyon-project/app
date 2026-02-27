@@ -2,6 +2,8 @@ import { createRoute } from "@hono/zod-openapi";
 import { OpenAPIHono } from "@hono/zod-openapi";
 import { prisma } from "@/api/lib/prisma.ts";
 import { getCoverageMapForCommit } from "@/api/lib/coverage/coverage-map-for-commit.ts";
+import { getCoverageMapForCr } from "@/api/lib/coverage/coverage-map-for-cr.ts";
+import { getCoverageMapForAccumulative } from "@/api/lib/coverage/coverage-map-for-accumulative.ts";
 import { getCommitsByRepoID } from "@/api/lib/coverage/commits.ts";
 import { CoverageMapQuerySchema, CoverageCommitsQuerySchema } from "@/shared/schemas/coverage.ts";
 import { genSummaryMapByCoverageMap } from "canyon-data";
@@ -88,42 +90,87 @@ async function resolveRepoIDForCoverage(repoID: string): Promise<string> {
   return trimmed;
 }
 
+async function getMapBySubject(q: {
+  subject: string;
+  subjectID: string;
+  provider: string;
+  repoID: string;
+  buildTarget?: string;
+  filePath?: string;
+  scene?: string;
+}) {
+  switch (q.subject) {
+    case "commit":
+      return getCoverageMapForCommit({
+        provider: q.provider,
+        repoID: q.repoID,
+        sha: q.subjectID,
+        buildTarget: q.buildTarget ?? "",
+        filePath: q.filePath,
+        scene: q.scene,
+      });
+    case "pull":
+    case "merge_requests": {
+      const result = await getCoverageMapForCr({
+        provider: q.provider,
+        repoID: q.repoID,
+        crID: q.subjectID,
+        buildTarget: q.buildTarget ?? "",
+        filePath: q.filePath,
+        scene: q.scene,
+      });
+      if (result.success && result.coverage) return result.coverage;
+      return result;
+    }
+    case "accumulative": {
+      const result = await getCoverageMapForAccumulative({
+        provider: q.provider,
+        repoID: q.repoID,
+        accumulativeID: q.subjectID,
+        buildTarget: q.buildTarget ?? "",
+        filePath: q.filePath,
+        scene: q.scene,
+      });
+      if (result.success && result.coverage) return result.coverage;
+      return result;
+    }
+    default:
+      return { success: false, message: "invalid subject" };
+  }
+}
+
 coverageApi.openapi(coverageMapGetRoute, async (c) => {
   const q = c.req.valid("query");
-  if (q.subject !== "commit") {
-    return c.json({ success: false, message: "invalid subject" }, 400);
-  }
-  const result = await getCoverageMapForCommit({
-    provider: q.provider,
-    repoID: q.repoID,
-    sha: q.subjectID,
-    buildTarget: q.buildTarget ?? "",
-    filePath: q.filePath,
-    scene: q.scene,
-  });
-  if ("success" in result && result.success === false) {
-    return c.json({ success: false, message: result.message }, 400);
+  const result = await getMapBySubject(q);
+  if (typeof result === "object" && "success" in result && result.success === false) {
+    return c.json(
+      { success: false, message: (result as { message?: string }).message ?? "Failed" },
+      400,
+    );
   }
   return c.json(result);
 });
 
 coverageApi.openapi(coverageSummaryMapRoute, async (c) => {
   const q = c.req.valid("query");
-  if (q.subject !== "commit") {
-    return c.json({ success: false, message: "invalid subject" }, 400);
+  const map = await getMapBySubject(q);
+  if (typeof map === "object" && "success" in map && map.success === false) {
+    return c.json(
+      { success: false, message: (map as { message?: string }).message ?? "Failed" },
+      400,
+    );
   }
-  const map = await getCoverageMapForCommit({
-    provider: q.provider,
-    repoID: q.repoID,
-    sha: q.subjectID,
-    buildTarget: q.buildTarget ?? "",
-    filePath: q.filePath,
-    scene: q.scene,
-  });
-  if ("success" in map && map.success === false) {
-    return c.json({ success: false, message: map.message }, 400);
-  }
-  const summary = genSummaryMapByCoverageMap(map as Record<string, unknown>, []);
+  const coverage = map as Record<string, unknown>;
+  const diffAdditions =
+    q.subject === "pull" || q.subject === "merge_requests" || q.subject === "accumulative"
+      ? Object.values(coverage)
+          .map((m: unknown) => {
+            const o = m as { path?: string; diff?: { additions?: number[] } };
+            return { path: o?.path, additions: o?.diff?.additions || [] };
+          })
+          .filter((item) => item.additions.length > 0)
+      : [];
+  const summary = genSummaryMapByCoverageMap(coverage, diffAdditions);
   return c.json(summary);
 });
 
