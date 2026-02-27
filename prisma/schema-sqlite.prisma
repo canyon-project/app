@@ -1,5 +1,7 @@
 generator client2 {
-  provider      = "prisma-client-js"
+  provider      = "prisma-client"
+  output        = "../generated/schema-sqlite"
+  moduleFormat  = "esm"
   binaryTargets = ["native", "rhel-openssl-3.0.x"]
 }
 
@@ -17,9 +19,9 @@ datasource db_sqlite {
 
 model CoverageQueue {
   id        Int         @id @default(autoincrement())
-  payload   String      // JSON string
+  payload   String // JSON string
   status    QueueStatus @default(PENDING)
-  pid       Int?        // 当前进程 ID
+  pid       Int? // 当前进程 ID
   createdAt DateTime    @default(now()) @map("created_at")
 
   @@map("coverage_queue")

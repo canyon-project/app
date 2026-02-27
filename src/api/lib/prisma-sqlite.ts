@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient } from "../../../generated/schema-sqlite/client";
 
 const prisma = new PrismaClient();
 

@@ -5,6 +5,7 @@ import react from "@vitejs/plugin-react-swc";
 import Pages from "vite-plugin-pages";
 import tailwindcss from "@tailwindcss/vite";
 import path from "path";
+import {copyPrismaEngines} from "./copyPrismaEngines.ts";
 
 export default defineConfig({
   build: {
@@ -26,6 +27,7 @@ export default defineConfig({
       // 不带 /api 的请求交给 Vite，带 /api 的由 Hono 处理
       exclude: [/^(?!\/api(\/|$|\?))/],
     }),
+    copyPrismaEngines(),
   ],
   resolve: {
     alias: {
