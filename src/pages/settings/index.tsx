@@ -1,18 +1,18 @@
-import { SettingOutlined } from '@ant-design/icons';
-import { Card, Select, Typography } from 'antd';
-import { useTranslation } from 'react-i18next';
-import BasicLayout from '@/layouts/BasicLayout';
+import { SettingOutlined } from "@ant-design/icons";
+import { Card, Select, Typography } from "antd";
+import { useTranslation } from "react-i18next";
+import BasicLayout from "@/layouts/BasicLayout";
 
-const LANGUAGE_KEY = 'language';
+const LANGUAGE_KEY = "language";
 const LANGUAGES = [
-  { value: 'cn', labelKey: 'settings.language.option.cn' },
-  { value: 'en', labelKey: 'settings.language.option.en' },
-  { value: 'ja', labelKey: 'settings.language.option.ja' },
+  { value: "cn", labelKey: "settings.language.option.cn" },
+  { value: "en", labelKey: "settings.language.option.en" },
+  { value: "ja", labelKey: "settings.language.option.ja" },
 ] as const;
 
 const SettingsPage = () => {
   const { t, i18n } = useTranslation();
-  const current = (localStorage.getItem(LANGUAGE_KEY) || 'cn') as string;
+  const current = (localStorage.getItem(LANGUAGE_KEY) || "cn") as string;
 
   const handleLanguageChange = (value: string) => {
     localStorage.setItem(LANGUAGE_KEY, value);
@@ -25,15 +25,15 @@ const SettingsPage = () => {
       <div className="py-4">
         <Typography.Title level={4} className="mb-4 flex items-center gap-2">
           <SettingOutlined />
-          {t('menus.settings')}
+          {t("menus.settings")}
         </Typography.Title>
         <Typography.Paragraph type="secondary" className="mb-4">
-          {t('settings.desc')}
+          {t("settings.desc")}
         </Typography.Paragraph>
 
-        <Card title={t('settings.preference')} style={{ maxWidth: 560 }}>
+        <Card title={t("settings.preference")} style={{ maxWidth: 560 }}>
           <div className="flex items-center gap-3">
-            <Typography.Text>{t('common.language')}</Typography.Text>
+            <Typography.Text>{t("common.language")}</Typography.Text>
             <Select
               value={current}
               onChange={handleLanguageChange}

@@ -23,15 +23,7 @@ export function testExclude(
       ".cw/**",
       "index.ios.js",
     ]),
-    extension: matchRule.extensions || [
-      ".js",
-      ".cjs",
-      ".mjs",
-      ".ts",
-      ".tsx",
-      ".jsx",
-      ".vue",
-    ],
+    extension: matchRule.extensions || [".js", ".cjs", ".mjs", ".ts", ".tsx", ".jsx", ".vue"],
   });
 
   const filterCoverage: Record<string, unknown> = {};

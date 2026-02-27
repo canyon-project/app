@@ -1,19 +1,19 @@
-import type { CanyonReportProps } from '@canyonjs/report-component';
-import { CanyonReport } from '@canyonjs/report-component';
-import { useRequest } from 'ahooks';
-import { Spin } from 'antd';
-import axios from 'axios';
-import { useCallback, useMemo, useRef } from 'react';
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import type { CanyonReportProps } from "@canyonjs/report-component";
+import { CanyonReport } from "@canyonjs/report-component";
+import { useRequest } from "ahooks";
+import { Spin } from "antd";
+import axios from "axios";
+import { useCallback, useMemo, useRef } from "react";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { getDecode } from "@/helpers/getDecode";
 import { getRepoIDFromId } from "@/helpers/repo";
-import { getRepo } from '@/services/repo';
+import { getRepo } from "@/services/repo";
 
 // ==================== 类型定义 ====================
 
-type FileDataResponse = Awaited<ReturnType<CanyonReportProps['onSelect']>>;
+type FileDataResponse = Awaited<ReturnType<CanyonReportProps["onSelect"]>>;
 
-type SubjectType = 'commit' | 'accumulative' | 'pull' | undefined;
+type SubjectType = "commit" | "accumulative" | "pull" | undefined;
 
 interface RouteParams {
   provider: string;
@@ -60,19 +60,16 @@ const ReportIndependent = () => {
   // 查询参数
   const queryParams = useMemo<QueryParams>(
     () => ({
-      buildTarget: searchParams.get('build_target') || '',
-      reportID: searchParams.get('report_id') || '',
-      reportProvider: searchParams.get('report_provider') || '',
-      scene: searchParams.get('scene') || '',
+      buildTarget: searchParams.get("build_target") || "",
+      reportID: searchParams.get("report_id") || "",
+      reportProvider: searchParams.get("report_provider") || "",
+      scene: searchParams.get("scene") || "",
     }),
     [searchParams],
   );
 
   // 当前激活的路径
-  const activatedPath = useMemo(
-    () => params['*']?.replace('-/', '') || '',
-    [params['*']],
-  );
+  const activatedPath = useMemo(() => params["*"]?.replace("-/", "") || "", [params["*"]]);
 
   // ==================== 获取 repoID ====================
 
@@ -91,7 +88,7 @@ const ReportIndependent = () => {
 
   const { data: mapData, loading } = useRequest(
     () =>
-      axios('/api/coverage/summary/map', {
+      axios("/api/coverage/summary/map", {
         params: {
           subject: subject,
           subjectID: routeParams.subjectID,
@@ -124,7 +121,7 @@ const ReportIndependent = () => {
       mapData
         ? Object.values(mapData).map((item: any) => ({
             ...item,
-            path: item.path || '',
+            path: item.path || "",
           }))
         : [],
     [mapData],
@@ -133,26 +130,23 @@ const ReportIndependent = () => {
   // ==================== 从 subjectID 中提取 SHA ====================
 
   const extractSHA = useCallback(
-    (
-      subject: SubjectType,
-      subjectID: string | undefined,
-    ): string | undefined => {
+    (subject: SubjectType, subjectID: string | undefined): string | undefined => {
       if (!subjectID) return undefined;
 
-      if (subject === 'commit') {
+      if (subject === "commit") {
         return subjectID;
       }
 
-      if (subject === 'accumulative') {
+      if (subject === "accumulative") {
         // 格式为 beforeCommitSHA...afterCommitSHA，使用 after (第二个) 作为 ref
-        const parts = subjectID.split('...');
+        const parts = subjectID.split("...");
         if (parts.length === 2) {
           return parts[1].trim();
         }
       }
 
       // pull 类型需要从 cr 表查询，不在这里提取 SHA
-      if (subject === 'pull') {
+      if (subject === "pull") {
         return undefined;
       }
 
@@ -170,9 +164,9 @@ const ReportIndependent = () => {
   const onSelect = useCallback(
     async (val: string): Promise<FileDataResponse> => {
       const emptyResponse: FileDataResponse = {
-        fileContent: '',
+        fileContent: "",
         fileCoverage: {
-          path: '',
+          path: "",
           statementMap: {},
           fnMap: {},
           branchMap: {},
@@ -191,14 +185,12 @@ const ReportIndependent = () => {
         const newPath = `/report/-/${routeParams.provider}/${routeParams.org}/${routeParams.repo}/${routeParams.subject}/${routeParams.subjectID}/-/${val}`;
         // 保留查询参数
         const searchParamsString = searchParams.toString();
-        const fullPath = searchParamsString
-          ? `${newPath}?${searchParamsString}`
-          : newPath;
+        const fullPath = searchParamsString ? `${newPath}?${searchParamsString}` : newPath;
         navigate(fullPath, { replace: true });
       }
 
       // 如果不是文件，返回空数据
-      if (!val.includes('.')) {
+      if (!val.includes(".")) {
         return emptyResponse;
       }
 
@@ -210,9 +202,7 @@ const ReportIndependent = () => {
       const sha = extractSHA(routeParams.subject, routeParams.subjectID);
 
       // 生成缓存 key
-      const fileContentKey = sha
-        ? `${repoID}-${sha}-${val}-${routeParams.provider}`
-        : null;
+      const fileContentKey = sha ? `${repoID}-${sha}-${val}-${routeParams.provider}` : null;
 
       // 此时 subject 和 subjectID 已经确定不为空
       const fileCoverageParams: Record<string, string> = {
@@ -252,13 +242,11 @@ const ReportIndependent = () => {
               ref: sha,
             },
           })
-          .then((resp) =>
-            resp.data?.content ? getDecode(resp.data.content) : "",
-          );
+          .then((resp) => (resp.data?.content ? getDecode(resp.data.content) : ""));
         if (fileContentKey) {
           fileContentCacheRef.current.set(fileContentKey, fileContentPromise);
         }
-      } else if (routeParams.subject === 'pull' && routeParams.subjectID) {
+      } else if (routeParams.subject === "pull" && routeParams.subjectID) {
         // pull 类型：传递 subject 和 subjectID，后端会从 cr 表查询 head repoID 和 head sha
         const pullFileContentKey = `${repoID}-pull-${routeParams.subjectID}-${val}-${routeParams.provider}`;
         if (fileContentCacheRef.current.has(pullFileContentKey)) {
@@ -267,7 +255,7 @@ const ReportIndependent = () => {
           fileContentPromise = Promise.resolve("");
         }
       } else {
-        fileContentPromise = Promise.resolve('');
+        fileContentPromise = Promise.resolve("");
       }
 
       // 获取或创建覆盖率数据请求
@@ -276,10 +264,10 @@ const ReportIndependent = () => {
         coverageMapPromise = coverageMapCacheRef.current.get(coverageMapKey)!;
       } else {
         coverageMapPromise = axios
-          .get('/api/coverage/map', {
+          .get("/api/coverage/map", {
             params: {
               ...fileCoverageParams,
-              mode: 'blockMerge',
+              mode: "blockMerge",
             },
           })
           .then((resp) => resp.data[val] || emptyResponse.fileCoverage);
@@ -299,30 +287,22 @@ const ReportIndependent = () => {
       };
 
       return {
-        fileContent: fileContent || '',
+        fileContent: fileContent || "",
         fileCoverage: fileCoverage || emptyResponse.fileCoverage,
         fileCodeChange,
       };
     },
-    [
-      activatedPath,
-      routeParams,
-      queryParams,
-      subject,
-      repoID,
-      navigate,
-      extractSHA,
-    ],
+    [activatedPath, routeParams, queryParams, subject, repoID, navigate, extractSHA],
   );
 
   // ==================== 渲染 ====================
 
   return (
     <Spin spinning={loading}>
-      <div className='p-[6px]'>
+      <div className="p-[6px]">
         <div
           style={{
-            height: 'calc(100vh - 12px)',
+            height: "calc(100vh - 12px)",
           }}
         >
           <CanyonReport

@@ -35,9 +35,7 @@ export type CommitRecord = {
 };
 
 /** 从 Coverage 表按 repoID 聚合 commits */
-export async function getCommitsByRepoID(
-  repoID: string,
-): Promise<CommitRecord[]> {
+export async function getCommitsByRepoID(repoID: string): Promise<CommitRecord[]> {
   const coverages = await prisma.coverage.findMany({
     where: { repoID },
     orderBy: { updatedAt: "desc" },
@@ -48,10 +46,7 @@ export async function getCommitsByRepoID(
   const commitsMap = new Map<string, CommitRecord>();
   const commitScenesMap = new Map<string, Map<string, SceneInfo>>();
   const commitBuildTargetsMap = new Map<string, Set<string>>();
-  const commitBuildTargetScenesMap = new Map<
-    string,
-    Map<string, Map<string, SceneInfo>>
-  >();
+  const commitBuildTargetScenesMap = new Map<string, Map<string, Map<string, SceneInfo>>>();
   const commitProviderMap = new Map<string, string>();
 
   for (const coverage of coverages) {
@@ -99,13 +94,11 @@ export async function getCommitsByRepoID(
     }
 
     const buildTargetSet = commitBuildTargetsMap.get(sha)!;
-    const buildTarget =
-      coverage.buildTarget?.trim() !== "" ? coverage.buildTarget : "";
+    const buildTarget = coverage.buildTarget?.trim() !== "" ? coverage.buildTarget : "";
     if (buildTarget) buildTargetSet.add(buildTarget);
 
     if (!record.reportID && reportID) record.reportID = reportID;
-    if (!record.reportProvider && reportProvider)
-      record.reportProvider = reportProvider;
+    if (!record.reportProvider && reportProvider) record.reportProvider = reportProvider;
 
     const sceneMap = commitScenesMap.get(sha)!;
     if (!sceneMap.has(coverage.sceneKey)) {
@@ -141,12 +134,10 @@ export async function getCommitsByRepoID(
     }
 
     const buildTargetScenesMap = commitBuildTargetScenesMap.get(sha)!;
-    record.buildTargetScenes = Array.from(buildTargetScenesMap.entries()).map(
-      ([bt, sceneMap]) => ({
-        buildTarget: bt,
-        scenes: Array.from(sceneMap.values()),
-      }),
-    );
+    record.buildTargetScenes = Array.from(buildTargetScenesMap.entries()).map(([bt, sceneMap]) => ({
+      buildTarget: bt,
+      scenes: Array.from(sceneMap.values()),
+    }));
   }
 
   const commits = Array.from(commitsMap.values());
@@ -179,7 +170,6 @@ export async function getCommitsByRepoID(
   }
 
   return commits.sort(
-    (a, b) =>
-      new Date(b.latestReport).getTime() - new Date(a.latestReport).getTime(),
+    (a, b) => new Date(b.latestReport).getTime() - new Date(a.latestReport).getTime(),
   );
 }

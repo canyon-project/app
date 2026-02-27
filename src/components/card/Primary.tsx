@@ -1,5 +1,5 @@
-import { theme } from 'antd';
-import type { FC } from 'react';
+import { theme } from "antd";
+import type { FC } from "react";
 
 const { useToken } = theme;
 const CardPrimary: FC<{
@@ -8,7 +8,7 @@ const CardPrimary: FC<{
   const { token } = useToken();
   return (
     <div
-      className={'rounded-[8px] overflow-hidden'}
+      className={"rounded-[8px] overflow-hidden"}
       style={{
         border: `1px solid ${token.colorBorder}`,
         boxShadow: `${token.boxShadowTertiary}`,

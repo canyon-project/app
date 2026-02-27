@@ -1,4 +1,4 @@
-import { request } from './request';
+import { request } from "./request";
 
 export type DiffListQuery = {
   repoID: string;
@@ -17,7 +17,7 @@ export type DiffCreateBody = {
  */
 export function getDiffList(params: DiffListQuery) {
   return request
-    .get<{ data: unknown[]; total?: number }>('/api/code/diff', { params })
+    .get<{ data: unknown[]; total?: number }>("/api/code/diff", { params })
     .then((res) => res.data);
 }
 
@@ -25,12 +25,12 @@ export function getDiffList(params: DiffListQuery) {
  * 创建 diff（如新增累积记录）
  */
 export function createDiff(body: DiffCreateBody) {
-  return request.post('/api/code/diff', body);
+  return request.post("/api/code/diff", body);
 }
 
 /**
  * 删除 diff
  */
 export function deleteDiff(params: DiffListQuery & { subjectID: string; subject: string }) {
-  return request.delete('/api/code/diff', { params });
+  return request.delete("/api/code/diff", { params });
 }

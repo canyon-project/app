@@ -1,4 +1,4 @@
-import { request } from './request';
+import { request } from "./request";
 
 export type CommitsQuery = {
   repoID: string;
@@ -13,6 +13,6 @@ export type CommitsQuery = {
  */
 export function getCommits(params: CommitsQuery) {
   return request
-    .get<{ data: unknown[] }>('/api/coverage/commits', { params })
+    .get<{ data: unknown[] }>("/api/coverage/commits", { params })
     .then((res) => res.data?.data ?? []);
 }

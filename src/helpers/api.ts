@@ -6,7 +6,7 @@ export async function getApiErrorMessage(res: Response): Promise<string> {
     const body = await res.json();
     const msg = body?.message;
     if (Array.isArray(msg)) return msg[0] ?? `请求失败: ${res.status}`;
-    if (typeof msg === 'string') return msg;
+    if (typeof msg === "string") return msg;
   } catch {
     // 非 JSON 或解析失败
   }
@@ -17,12 +17,12 @@ export async function getApiErrorMessage(res: Response): Promise<string> {
  * 从 axios 错误中解析展示文案（err.response?.data?.message）
  */
 export function getAxiosErrorMessage(err: unknown): string | null {
-  if (err && typeof err === 'object' && 'response' in err) {
+  if (err && typeof err === "object" && "response" in err) {
     const res = (err as { response?: { data?: { message?: string | string[] }; status?: number } })
       .response;
     const msg = res?.data?.message;
     if (Array.isArray(msg) && msg[0]) return msg[0];
-    if (typeof msg === 'string') return msg;
+    if (typeof msg === "string") return msg;
     if (res?.status) return `请求失败: ${res.status}`;
   }
   if (err instanceof Error) return err.message;

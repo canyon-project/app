@@ -1,10 +1,10 @@
-import { Breadcrumb, Button, Divider, message, Tabs } from 'antd';
-import { useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { Outlet, useLocation, useNavigate, useParams } from 'react-router-dom';
-import RIf from '@/components/RIf.tsx';
-import BasicLayout from '@/layouts/BasicLayout.tsx';
-import { getRepo } from '@/services/repo';
+import { Breadcrumb, Button, Divider, message, Tabs } from "antd";
+import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { Outlet, useLocation, useNavigate, useParams } from "react-router-dom";
+import RIf from "@/components/RIf.tsx";
+import BasicLayout from "@/layouts/BasicLayout.tsx";
+import { getRepo } from "@/services/repo";
 
 type Repo = {
   id: string;
@@ -37,9 +37,9 @@ const ProjectDetailPage = () => {
       } catch (error: unknown) {
         const status = (error as { response?: { status: number } })?.response?.status;
         if (status === 404) {
-          message.error(t('projects.detail.repo.not.found'));
+          message.error(t("projects.detail.repo.not.found"));
         } else {
-          message.error(t('projects.detail.repo.fetch.failed'));
+          message.error(t("projects.detail.repo.fetch.failed"));
         }
         console.error(error);
       } finally {
@@ -53,12 +53,12 @@ const ProjectDetailPage = () => {
   return (
     <BasicLayout>
       <RIf condition={!loading && repo !== null}>
-        <div className={'h-[48px] flex items-center justify-between'}>
+        <div className={"h-[48px] flex items-center justify-between"}>
           <Breadcrumb
             items={[
               {
-                title: t('menus.projects'),
-                href: '/projects',
+                title: t("menus.projects"),
+                href: "/projects",
               },
               {
                 title: params.repo,
@@ -78,27 +78,25 @@ const ProjectDetailPage = () => {
           {/*  设置*/}
           {/*</Button>*/}
         </div>
-        <Divider style={{ margin: '0' }} />
-        {!location.pathname.includes('/settings') && (
+        <Divider style={{ margin: "0" }} />
+        {!location.pathname.includes("/settings") && (
           <Tabs
             activeKey={
-              location.pathname.includes('/accumulative')
-                ? 'accumulative'
-                : location.pathname.includes('/multiple-commits')
-                  ? 'multiple-commits'
-                  : 'commits'
+              location.pathname.includes("/accumulative")
+                ? "accumulative"
+                : location.pathname.includes("/multiple-commits")
+                  ? "multiple-commits"
+                  : "commits"
             }
             onChange={(key) => {
-              navigate(
-                `/${params.provider}/${params.org}/${params.repo}/${key}`,
-              );
+              navigate(`/${params.provider}/${params.org}/${params.repo}/${key}`);
             }}
             items={[
               {
-                key: 'accumulative',
-                label: t('projects.detail.tabs.accumulative'),
+                key: "accumulative",
+                label: t("projects.detail.tabs.accumulative"),
               },
-              { key: 'commits', label: t('projects.detail.tabs.commits') },
+              { key: "commits", label: t("projects.detail.tabs.commits") },
             ]}
           />
         )}

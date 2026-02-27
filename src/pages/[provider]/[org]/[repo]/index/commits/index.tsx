@@ -1,30 +1,15 @@
-import {
-  BranchesOutlined,
-  DownOutlined,
-  SearchOutlined,
-  UserOutlined,
-} from '@ant-design/icons';
-import type { MenuProps } from 'antd';
-import {
-  Avatar,
-  Dropdown,
-  Input,
-  message,
-  Space,
-  Switch,
-  Table,
-  Tag,
-  Typography,
-} from 'antd';
-import type { ColumnsType } from 'antd/es/table';
-import dayjs from 'dayjs';
-import { useEffect, useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { Link, useOutletContext, useParams } from 'react-router-dom';
-import CardPrimary from '@/components/card/Primary';
-import SnapshotDrawer from '@/components/snapshot/SnapshotDrawer';
-import type { SnapshotFormValues } from '@/services/snapshot';
-import { getCommits } from '@/services/coverage';
+import { BranchesOutlined, DownOutlined, SearchOutlined, UserOutlined } from "@ant-design/icons";
+import type { MenuProps } from "antd";
+import { Avatar, Dropdown, Input, message, Space, Switch, Table, Tag, Typography } from "antd";
+import type { ColumnsType } from "antd/es/table";
+import dayjs from "dayjs";
+import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { Link, useOutletContext, useParams } from "react-router-dom";
+import CardPrimary from "@/components/card/Primary";
+import SnapshotDrawer from "@/components/snapshot/SnapshotDrawer";
+import type { SnapshotFormValues } from "@/services/snapshot";
+import { getCommits } from "@/services/coverage";
 
 const { Text } = Typography;
 
@@ -90,12 +75,14 @@ const CommitsPage = () => {
   const [commits, setCommits] = useState<CommitRecord[]>([]);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const [searchKeyword, setSearchKeyword] = useState('');
+  const [searchKeyword, setSearchKeyword] = useState("");
   const [onlyDefaultBranch, setOnlyDefaultBranch] = useState(false);
-  const [defaultBranch, setDefaultBranch] = useState('');
+  const [defaultBranch, setDefaultBranch] = useState("");
   const [snapshotDrawerOpen, setSnapshotDrawerOpen] = useState(false);
-  const [snapshotDrawerMode, setSnapshotDrawerMode] = useState<'create' | 'records'>('create');
-  const [snapshotInitialValues, setSnapshotInitialValues] = useState<Partial<SnapshotFormValues>>({});
+  const [snapshotDrawerMode, setSnapshotDrawerMode] = useState<"create" | "records">("create");
+  const [snapshotInitialValues, setSnapshotInitialValues] = useState<Partial<SnapshotFormValues>>(
+    {},
+  );
 
   // 从 repo config 中解析默认分支
   useEffect(() => {
@@ -127,7 +114,7 @@ const CommitsPage = () => {
       });
       setCommits(Array.isArray(data) ? data : []);
     } catch (error) {
-      message.error(t('projects.commits.fetch.failed'));
+      message.error(t("projects.commits.fetch.failed"));
       console.error(error);
     } finally {
       setLoading(false);
@@ -136,14 +123,7 @@ const CommitsPage = () => {
 
   useEffect(() => {
     fetchCommits();
-  }, [
-    repo?.id,
-    page,
-    pageSize,
-    searchKeyword,
-    onlyDefaultBranch,
-    defaultBranch,
-  ]);
+  }, [repo?.id, page, pageSize, searchKeyword, onlyDefaultBranch, defaultBranch]);
 
   // 展平数据：每个 buildTarget 一行（按 sha + buildTarget 分组）
   const flatData = useMemo(() => {
@@ -152,7 +132,7 @@ const CommitsPage = () => {
       // 如果有 buildTargetScenes，使用它；否则回退到旧的逻辑
       if (commit.buildTargetScenes && commit.buildTargetScenes.length > 0) {
         for (const buildTargetScene of commit.buildTargetScenes) {
-          const buildTarget = buildTargetScene.buildTarget || '';
+          const buildTarget = buildTargetScene.buildTarget || "";
           const scenes = buildTargetScene.scenes || [];
 
           // 每个 buildTarget 创建一行
@@ -172,7 +152,7 @@ const CommitsPage = () => {
           // 如果没有 buildTargets，至少创建一行
           result.push({
             ...commit,
-            currentBuildTarget: commit.buildTarget || '',
+            currentBuildTarget: commit.buildTarget || "",
             currentScenes: scenes,
             rowKey: `${commit.sha}_empty`,
           });
@@ -197,23 +177,21 @@ const CommitsPage = () => {
       title: (
         <Space>
           <BranchesOutlined />
-          {t('projects.commits.columns.sha')}
+          {t("projects.commits.columns.sha")}
         </Space>
       ),
-      dataIndex: 'sha',
-      key: 'sha',
+      dataIndex: "sha",
+      key: "sha",
       width: 100,
       render: (_: string, record: FlatCommitRow) => (
-        <Link
-          to={`/${params.provider}/${params.org}/${params.repo}/commit/${record.sha}`}
-        >
+        <Link to={`/${params.provider}/${params.org}/${params.repo}/commit/${record.sha}`}>
           {record.sha.substring(0, 7)}
         </Link>
       ),
     },
     {
-      title: t('projects.message'),
-      key: 'commitInfo',
+      title: t("projects.message"),
+      key: "commitInfo",
       ellipsis: true,
       render: (_: any, record: FlatCommitRow) => {
         const hasMessage = record.commitMessage;
@@ -221,15 +199,13 @@ const CommitsPage = () => {
         const hasTime = record.createdAt;
 
         if (!hasMessage && !hasAuthor && !hasTime) {
-          return '-';
+          return "-";
         }
 
         return (
-          <Space direction='vertical' size={2} style={{ width: '100%' }}>
+          <Space direction="vertical" size={2} style={{ width: "100%" }}>
             {hasMessage && (
-              <Text ellipsis={{ tooltip: record.commitMessage }}>
-                {record.commitMessage}
-              </Text>
+              <Text ellipsis={{ tooltip: record.commitMessage }}>{record.commitMessage}</Text>
             )}
             {hasAuthor && (
               <Space size={4}>
@@ -238,17 +214,15 @@ const CommitsPage = () => {
                 ) : (
                   <Avatar size={20} icon={<UserOutlined />} />
                 )}
-                <Text type='secondary' style={{ fontSize: '12px' }}>
-                  {record.authorName || record.authorEmail || '-'}
-                  {record.authorEmail && record.authorName && (
-                    <> ({record.authorEmail})</>
-                  )}
+                <Text type="secondary" style={{ fontSize: "12px" }}>
+                  {record.authorName || record.authorEmail || "-"}
+                  {record.authorEmail && record.authorName && <> ({record.authorEmail})</>}
                 </Text>
               </Space>
             )}
             {hasTime && (
-              <Text type='secondary' style={{ fontSize: '12px' }}>
-                {dayjs(record.createdAt).format('YYYY-MM-DD HH:mm:ss')}
+              <Text type="secondary" style={{ fontSize: "12px" }}>
+                {dayjs(record.createdAt).format("YYYY-MM-DD HH:mm:ss")}
               </Text>
             )}
           </Space>
@@ -256,31 +230,30 @@ const CommitsPage = () => {
       },
     },
     {
-      title: t('projects.commits.columns.buildTarget'),
-      dataIndex: 'currentBuildTarget',
-      key: 'currentBuildTarget',
+      title: t("projects.commits.columns.buildTarget"),
+      dataIndex: "currentBuildTarget",
+      key: "currentBuildTarget",
       render: (text: string) => {
-        return text ? <Tag>{text}</Tag> : '-';
+        return text ? <Tag>{text}</Tag> : "-";
       },
     },
     {
-      title: t('projects.report_times'),
-      dataIndex: 'times',
-      key: 'times',
+      title: t("projects.report_times"),
+      dataIndex: "times",
+      key: "times",
       width: 80,
-      align: 'right',
+      align: "right",
     },
     {
-      title: t('projects.latest_report_time'),
-      dataIndex: 'latestReport',
-      key: 'latestReport',
+      title: t("projects.latest_report_time"),
+      dataIndex: "latestReport",
+      key: "latestReport",
       width: 120,
-      render: (text: string) =>
-        text ? dayjs(text).format('MM-DD HH:mm') : '-',
+      render: (text: string) => (text ? dayjs(text).format("MM-DD HH:mm") : "-"),
     },
     {
-      title: t('common.option'),
-      key: 'option',
+      title: t("common.option"),
+      key: "option",
       width: 280,
       render: (_: any, record: FlatCommitRow) => {
         const detailPath = `/report/-/${params.provider}/${params.org}/${params.repo}/commit/${record.sha}/-/?build_target=${record.currentBuildTarget}`;
@@ -289,19 +262,19 @@ const CommitsPage = () => {
         const buildReportPath = (scene: Record<string, unknown>) => {
           const searchParams = new URLSearchParams();
           if (record.currentBuildTarget) {
-            searchParams.set('build_target', record.currentBuildTarget);
+            searchParams.set("build_target", record.currentBuildTarget);
           }
           if (record.reportID) {
-            searchParams.set('report_id', record.reportID);
+            searchParams.set("report_id", record.reportID);
           }
           if (record.reportProvider) {
-            searchParams.set('report_provider', record.reportProvider);
+            searchParams.set("report_provider", record.reportProvider);
           }
           if (scene && Object.keys(scene).length > 0) {
-            searchParams.set('scene', JSON.stringify(scene));
+            searchParams.set("scene", JSON.stringify(scene));
           }
           const queryString = searchParams.toString();
-          return `/report/-/${params.provider}/${params.org}/${params.repo}/commit/${record.sha}/-/${queryString ? `?${queryString}` : ''}`;
+          return `/report/-/${params.provider}/${params.org}/${params.repo}/commit/${record.sha}/-/${queryString ? `?${queryString}` : ""}`;
         };
 
         // 处理场景显示
@@ -330,32 +303,30 @@ const CommitsPage = () => {
               const sceneObj = { [key]: value };
               const reportPath = buildReportPath(sceneObj);
               sceneDropdown = (
-                <a href={reportPath} target='_blank' rel='noreferrer'>
+                <a href={reportPath} target="_blank" rel="noreferrer">
                   {key}={String(value)}
                 </a>
               );
             } else {
               // 如果有多个 key-value 对，使用下拉菜单
-              const menuItems: MenuProps['items'] = kvPairsArray.map(
-                ({ key, value }, index) => {
-                  const sceneObj = { [key]: value };
-                  const reportPath = buildReportPath(sceneObj);
+              const menuItems: MenuProps["items"] = kvPairsArray.map(({ key, value }, index) => {
+                const sceneObj = { [key]: value };
+                const reportPath = buildReportPath(sceneObj);
 
-                  return {
-                    key: index,
-                    label: (
-                      <a href={reportPath} target='_blank' rel='noreferrer'>
-                        {key}={String(value)}
-                      </a>
-                    ),
-                  };
-                },
-              );
+                return {
+                  key: index,
+                  label: (
+                    <a href={reportPath} target="_blank" rel="noreferrer">
+                      {key}={String(value)}
+                    </a>
+                  ),
+                };
+              });
 
               sceneDropdown = (
-                <Dropdown menu={{ items: menuItems }} placement='bottomLeft'>
+                <Dropdown menu={{ items: menuItems }} placement="bottomLeft">
                   <a onClick={(e) => e.preventDefault()}>
-                    {t('projects.commits.columns.scene')} <DownOutlined />
+                    {t("projects.commits.columns.scene")} <DownOutlined />
                   </a>
                 </Dropdown>
               );
@@ -365,16 +336,12 @@ const CommitsPage = () => {
 
         return (
           <Space wrap>
-            <Link to={detailPath} target={'_blank'}>
-              {t('projects.commits.columns.overall')}
+            <Link to={detailPath} target={"_blank"}>
+              {t("projects.commits.columns.overall")}
             </Link>
             {sceneDropdown}
-            <a onClick={() => openSnapshotCreate(record)}>
-              {t('projects.snapshot.button.create')}
-            </a>
-            <a onClick={openSnapshotRecords}>
-              {t('projects.snapshot.button.records')}
-            </a>
+            <a onClick={() => openSnapshotCreate(record)}>{t("projects.snapshot.button.create")}</a>
+            <a onClick={openSnapshotRecords}>{t("projects.snapshot.button.records")}</a>
           </Space>
         );
       },
@@ -383,35 +350,35 @@ const CommitsPage = () => {
 
   const openSnapshotCreate = (record: FlatCommitRow) => {
     setSnapshotInitialValues({
-      repoID: repo?.id ?? '',
-      provider: params.provider ?? '',
-      sha: record.sha ?? '',
-      title: record.commitMessage ?? '',
-      description: '',
+      repoID: repo?.id ?? "",
+      provider: params.provider ?? "",
+      sha: record.sha ?? "",
+      title: record.commitMessage ?? "",
+      description: "",
     });
-    setSnapshotDrawerMode('create');
+    setSnapshotDrawerMode("create");
     setSnapshotDrawerOpen(true);
   };
 
   const openSnapshotRecords = () => {
     setSnapshotInitialValues({
-      repoID: repo?.id ?? '',
-      provider: params.provider ?? '',
+      repoID: repo?.id ?? "",
+      provider: params.provider ?? "",
     });
-    setSnapshotDrawerMode('records');
+    setSnapshotDrawerMode("records");
     setSnapshotDrawerOpen(true);
   };
 
   if (!repo) {
-    return <div>{t('projects.commits.loading')}</div>;
+    return <div>{t("projects.commits.loading")}</div>;
   }
 
   return (
-    <div className={''}>
-      <div className={'mb-4 flex items-center gap-3'}>
+    <div className={""}>
+      <div className={"mb-4 flex items-center gap-3"}>
         <Input
-          style={{ width: '600px' }}
-          placeholder={t('projects.overview_search_keywords')}
+          style={{ width: "600px" }}
+          placeholder={t("projects.overview_search_keywords")}
           prefix={<SearchOutlined />}
           value={searchKeyword}
           onChange={(e) => setSearchKeyword(e.target.value)}
@@ -421,13 +388,13 @@ const CommitsPage = () => {
           }}
           allowClear
           onClear={() => {
-            setSearchKeyword('');
+            setSearchKeyword("");
             setPage(1);
           }}
         />
         {defaultBranch && (
           <Space>
-            <Text type={'secondary'}>{t('projects.only.default.branch')}:</Text>
+            <Text type={"secondary"}>{t("projects.only.default.branch")}:</Text>
             <Switch
               checked={onlyDefaultBranch}
               onChange={(checked) => {
@@ -444,19 +411,17 @@ const CommitsPage = () => {
         mode={snapshotDrawerMode}
         initialValues={snapshotInitialValues}
         titleContext={
-          params.org && params.repo
-            ? { org: params.org, repo: params.repo }
-            : undefined
+          params.org && params.repo ? { org: params.org, repo: params.repo } : undefined
         }
-        onCreateSuccess={() => setSnapshotDrawerMode('records')}
+        onCreateSuccess={() => setSnapshotDrawerMode("records")}
         onSwitchToCreate={() => {
-          setSnapshotDrawerMode('create');
+          setSnapshotDrawerMode("create");
           setSnapshotInitialValues({
-            repoID: repo?.id ?? '',
-            provider: params.provider ?? '',
-            sha: '',
-            title: '',
-            description: '',
+            repoID: repo?.id ?? "",
+            provider: params.provider ?? "",
+            sha: "",
+            title: "",
+            description: "",
           });
         }}
       />
@@ -465,13 +430,13 @@ const CommitsPage = () => {
           columns={columns}
           dataSource={flatData}
           loading={loading}
-          rowKey='rowKey'
+          rowKey="rowKey"
           pagination={{
             current: page,
             pageSize: pageSize,
             total: flatData.length,
             showTotal: (total, range) =>
-              `${range[0]}-${range[1]} / ${total} ${t('common.total_items', { total })}`,
+              `${range[0]}-${range[1]} / ${total} ${t("common.total_items", { total })}`,
             onChange: (newPage, newPageSize) => {
               setPage(newPage);
               if (newPageSize !== pageSize) {

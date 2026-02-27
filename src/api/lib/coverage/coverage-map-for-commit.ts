@@ -20,11 +20,7 @@ function buildSceneQueryCondition(scene?: string) {
   if (!scene) return undefined;
   try {
     const sceneObj = JSON.parse(scene);
-    if (
-      typeof sceneObj !== "object" ||
-      sceneObj === null ||
-      Array.isArray(sceneObj)
-    ) {
+    if (typeof sceneObj !== "object" || sceneObj === null || Array.isArray(sceneObj)) {
       return undefined;
     }
     const entries = Object.entries(sceneObj);
@@ -82,8 +78,7 @@ export async function getCoverageMapForCommit(
   const { instrumentCwd, buildHash } = coverageRecord;
   const instrumentCwdPrefix = instrumentCwd + "/";
 
-  const mapRelationWhereCondition: { buildHash: string; fullFilePath?: string } =
-    { buildHash };
+  const mapRelationWhereCondition: { buildHash: string; fullFilePath?: string } = { buildHash };
   if (filePath) {
     mapRelationWhereCondition.fullFilePath = instrumentCwdPrefix + filePath;
   }
@@ -102,9 +97,7 @@ export async function getCoverageMapForCommit(
   const coverageMapHashKeySet = new Set<string>();
   for (const relation of mapRelations) {
     sourceMapHashSet.add(relation.sourceMapHash);
-    coverageMapHashKeySet.add(
-      `${relation.coverageMapHash}|${relation.fileContentHash}`,
-    );
+    coverageMapHashKeySet.add(`${relation.coverageMapHash}|${relation.fileContentHash}`);
   }
 
   const [sourceMaps, coverageMaps] = await Promise.all([
@@ -155,23 +148,14 @@ export async function getCoverageMapForCommit(
     where: coverageHitWhereCondition as never,
   });
 
-  const aggregatedHitDataByFile = new Map<
-    string,
-    { s: NumMap; f: NumMap }
-  >();
+  const aggregatedHitDataByFile = new Map<string, { s: NumMap; f: NumMap }>();
   for (const hit of coverageHits) {
     if (!aggregatedHitDataByFile.has(hit.rawFilePath)) {
       aggregatedHitDataByFile.set(hit.rawFilePath, { s: {}, f: {} });
     }
     const fileHitData = aggregatedHitDataByFile.get(hit.rawFilePath)!;
-    fileHitData.s = addMaps(
-      fileHitData.s,
-      ensureNumMap(hit.s as Record<string, unknown>),
-    );
-    fileHitData.f = addMaps(
-      fileHitData.f,
-      ensureNumMap(hit.f as Record<string, unknown>),
-    );
+    fileHitData.s = addMaps(fileHitData.s, ensureNumMap(hit.s as Record<string, unknown>));
+    fileHitData.f = addMaps(fileHitData.f, ensureNumMap(hit.f as Record<string, unknown>));
   }
 
   const mergedCoverageData: Record<string, Record<string, unknown>> = {};
@@ -190,8 +174,7 @@ export async function getCoverageMapForCommit(
   if (Object.keys(mergedCoverageData).length === 0) {
     return {
       success: false,
-      message:
-        "No coverage data could be merged after combining maps and hits.",
+      message: "No coverage data could be merged after combining maps and hits.",
     };
   }
 
@@ -216,8 +199,8 @@ export async function getCoverageMapForCommit(
     };
   }
 
-  return testExclude(
-    normalizedCoverage,
-    JSON.stringify({ exclude: ["dist/**"] }),
-  ) as Record<string, unknown>;
+  return testExclude(normalizedCoverage, JSON.stringify({ exclude: ["dist/**"] })) as Record<
+    string,
+    unknown
+  >;
 }

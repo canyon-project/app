@@ -35,9 +35,19 @@ export const CoverageMapQuerySchema = z
     subjectID: z.string().openapi({ param: { name: "subjectID", in: "query" } }),
     provider: z.enum(["gitlab", "github"]).openapi({ param: { name: "provider", in: "query" } }),
     repoID: z.string().openapi({ param: { name: "repoID", in: "query" } }),
-    buildTarget: z.string().optional().default("").openapi({ param: { name: "buildTarget", in: "query" } }),
-    filePath: z.string().optional().openapi({ param: { name: "filePath", in: "query" } }),
-    scene: z.string().optional().openapi({ param: { name: "scene", in: "query" } }),
+    buildTarget: z
+      .string()
+      .optional()
+      .default("")
+      .openapi({ param: { name: "buildTarget", in: "query" } }),
+    filePath: z
+      .string()
+      .optional()
+      .openapi({ param: { name: "filePath", in: "query" } }),
+    scene: z
+      .string()
+      .optional()
+      .openapi({ param: { name: "scene", in: "query" } }),
   })
   .openapi("CoverageMapQuery");
 
@@ -45,8 +55,16 @@ export const CoverageMapQuerySchema = z
 export const CoverageCommitsQuerySchema = z
   .object({
     repoID: z.string().openapi({ param: { name: "repoID", in: "query" } }),
-    page: z.coerce.number().optional().default(1).openapi({ param: { name: "page", in: "query" } }),
-    pageSize: z.coerce.number().optional().default(10).openapi({ param: { name: "pageSize", in: "query" } }),
+    page: z.coerce
+      .number()
+      .optional()
+      .default(1)
+      .openapi({ param: { name: "page", in: "query" } }),
+    pageSize: z.coerce
+      .number()
+      .optional()
+      .default(10)
+      .openapi({ param: { name: "pageSize", in: "query" } }),
   })
   .openapi("CoverageCommitsQuery");
 

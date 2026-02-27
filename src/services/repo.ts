@@ -1,10 +1,10 @@
-import { request } from './request';
+import { request } from "./request";
 
 /**
  * 获取所有 Bu 选项
  */
 export function getBu() {
-  return request.get<string[]>('/api/repos/bu').then((res) => res.data);
+  return request.get<string[]>("/api/repos/bu").then((res) => res.data);
 }
 
 export type ReposQuery = { bu?: string; search?: string };
@@ -13,7 +13,7 @@ export type ReposQuery = { bu?: string; search?: string };
  * 获取仓库列表
  */
 export function getRepos(params?: ReposQuery) {
-  return request.get('/api/repos', { params }).then((res) => res.data);
+  return request.get("/api/repos", { params }).then((res) => res.data);
 }
 
 /**
@@ -26,7 +26,7 @@ export function getRepo(repoId: string) {
     return {
       data: {
         ...data,
-        id: data.id?.split('-').pop() ?? '',
+        id: data.id?.split("-").pop() ?? "",
       },
     };
   });
@@ -37,10 +37,9 @@ export function getRepo(repoId: string) {
  */
 export function checkRepo(repoID: string, provider: string) {
   return request
-    .get<{ repoID: string; pathWithNamespace: string; description: string }>(
-      '/api/repos/check',
-      { params: { repoID, provider } },
-    )
+    .get<{ repoID: string; pathWithNamespace: string; description: string }>("/api/repos/check", {
+      params: { repoID, provider },
+    })
     .then((res) => res.data);
 }
 
@@ -48,7 +47,7 @@ export function checkRepo(repoID: string, provider: string) {
  * 创建仓库
  */
 export function createRepo(data: { repoID: string; provider: string }) {
-  return request.post('/api/repos', data).then((res) => res.data);
+  return request.post("/api/repos", data).then((res) => res.data);
 }
 
 /**

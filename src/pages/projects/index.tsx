@@ -1,24 +1,15 @@
-import { FolderOutlined, PlusOutlined } from '@ant-design/icons';
-import {
-  Button,
-  Divider,
-  Input,
-  message,
-  Select,
-  Space,
-  Table,
-  Typography,
-} from 'antd';
-import type { ColumnsType } from 'antd/es/table';
-import dayjs from 'dayjs';
-import { useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router-dom';
-import CardPrimary from '@/components/card/Primary.tsx';
-import { getRepoIDFromId } from '@/helpers/repo';
-import { deleteRepo, getBu, getRepos } from '@/services/repo';
-import TextTypography from '@/components/typography/text.tsx';
-import BasicLayout from '@/layouts/BasicLayout.tsx';
+import { FolderOutlined, PlusOutlined } from "@ant-design/icons";
+import { Button, Divider, Input, message, Select, Space, Table, Typography } from "antd";
+import type { ColumnsType } from "antd/es/table";
+import dayjs from "dayjs";
+import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { Link } from "react-router-dom";
+import CardPrimary from "@/components/card/Primary.tsx";
+import { getRepoIDFromId } from "@/helpers/repo";
+import { deleteRepo, getBu, getRepos } from "@/services/repo";
+import TextTypography from "@/components/typography/text.tsx";
+import BasicLayout from "@/layouts/BasicLayout.tsx";
 
 const { Text } = Typography;
 
@@ -62,11 +53,9 @@ const Projects = () => {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [repos, setRepos] = useState<Repo[]>([]);
-  const [buOptions, setBuOptions] = useState<
-    { label: string; value: string }[]
-  >([]);
+  const [buOptions, setBuOptions] = useState<{ label: string; value: string }[]>([]);
   const [selectedBu, setSelectedBu] = useState<string | undefined>(undefined);
-  const [searchKeyword, setSearchKeyword] = useState<string>('');
+  const [searchKeyword, setSearchKeyword] = useState<string>("");
 
   const fetchBuOptions = async () => {
     try {
@@ -78,7 +67,7 @@ const Projects = () => {
         })),
       );
     } catch (error) {
-      console.error('获取 Bu 选项失败', error);
+      console.error("获取 Bu 选项失败", error);
     }
   };
 
@@ -91,7 +80,7 @@ const Projects = () => {
       });
       setRepos(data || []);
     } catch (error) {
-      message.error('获取项目列表失败');
+      message.error("获取项目列表失败");
       console.error(error);
     } finally {
       setLoading(false);
@@ -110,19 +99,19 @@ const Projects = () => {
     try {
       const repoID = getRepoIDFromId(id);
       await deleteRepo(repoID);
-      message.success('已删除');
+      message.success("已删除");
       await fetchRepos();
     } catch (error) {
-      message.error('删除失败');
+      message.error("删除失败");
       console.error(error);
     }
   };
 
   const columns: ColumnsType<ProjectRow> = [
     {
-      title: 'ID',
-      dataIndex: 'id',
-      key: 'id',
+      title: "ID",
+      dataIndex: "id",
+      key: "id",
       render(text, record) {
         return (
           <Space>
@@ -144,34 +133,29 @@ const Projects = () => {
       },
     },
     {
-      title: t('projects.name'),
-      dataIndex: 'pathWithNamespace',
-      key: 'pathWithNamespace',
+      title: t("projects.name"),
+      dataIndex: "pathWithNamespace",
+      key: "pathWithNamespace",
       render: (text, record) => {
         // 根据 provider 选择对应的 logo
         const logoPath =
-          record.provider === 'github'
-            ? '/gitproviders/github.svg'
-            : '/gitproviders/gitlab.svg';
+          record.provider === "github" ? "/gitproviders/github.svg" : "/gitproviders/gitlab.svg";
 
         return (
-          <div className={'flex gap-1'}>
-            <img src={logoPath} alt='' className={'mt-1 w-[16px] h-[16px]'} />
+          <div className={"flex gap-1"}>
+            <img src={logoPath} alt="" className={"mt-1 w-[16px] h-[16px]"} />
 
-            <span style={{ width: '4px', display: 'inline-block' }}></span>
-            <div className={'flex gap-1 flex-col'}>
+            <span style={{ width: "4px", display: "inline-block" }}></span>
+            <div className={"flex gap-1 flex-col"}>
               <a
-                className={'max-w-[240px]'}
-                style={{ color: 'unset' }}
-                target={'_blank'}
-                rel='noreferrer'
+                className={"max-w-[240px]"}
+                style={{ color: "unset" }}
+                target={"_blank"}
+                rel="noreferrer"
               >
                 {text}
               </a>
-              <Text
-                type={'secondary'}
-                style={{ fontSize: '12px', width: '240px' }}
-              >
+              <Text type={"secondary"} style={{ fontSize: "12px", width: "240px" }}>
                 {record.description}
               </Text>
             </div>
@@ -180,13 +164,13 @@ const Projects = () => {
       },
     },
     {
-      title: 'Bu',
-      dataIndex: 'bu',
+      title: "Bu",
+      dataIndex: "bu",
       sorter: true,
     },
     {
-      title: t('projects.report_times'),
-      dataIndex: 'reportTimes',
+      title: t("projects.report_times"),
+      dataIndex: "reportTimes",
       sorter: {
         compare: (a, b) => {
           const aValue = a.reportTimes || 0;
@@ -221,32 +205,28 @@ const Projects = () => {
     //   },
     // },
     {
-      title: t('projects.latest_report_time'),
-      dataIndex: 'lastReportTime',
+      title: t("projects.latest_report_time"),
+      dataIndex: "lastReportTime",
       sorter: {
         compare: (a, b) => {
-          const aValue = a.lastReportTime
-            ? new Date(a.lastReportTime).getTime()
-            : 0;
-          const bValue = b.lastReportTime
-            ? new Date(b.lastReportTime).getTime()
-            : 0;
+          const aValue = a.lastReportTime ? new Date(a.lastReportTime).getTime() : 0;
+          const bValue = b.lastReportTime ? new Date(b.lastReportTime).getTime() : 0;
           return aValue - bValue;
         },
         multiple: 2,
       },
       render(_) {
-        if (!_) return '-';
-        return <span>{dayjs(_).format('MM-DD HH:mm')}</span>;
+        if (!_) return "-";
+        return <span>{dayjs(_).format("MM-DD HH:mm")}</span>;
       },
     },
     {
-      title: t('common.option'),
-      key: 'option',
+      title: t("common.option"),
+      key: "option",
       render: (_, record) => {
         // 从 pathWithNamespace 解析出 org 和 repo
         // pathWithNamespace 格式通常是 "org/repo" 或 "group/org/repo"
-        const parts = record.pathWithNamespace.split('/');
+        const parts = record.pathWithNamespace.split("/");
         const org = parts.length >= 2 ? parts[parts.length - 2] : parts[0];
         const repo = parts[parts.length - 1];
         // 使用 record 中的 provider
@@ -259,15 +239,15 @@ const Projects = () => {
                 pathname: `/${provider}/${org}/${repo}/accumulative`,
               }}
             >
-              {t('common.detail')}
+              {t("common.detail")}
             </Link>
-            <Divider type={'vertical'} />
+            <Divider type={"vertical"} />
             <Link
               to={{
                 pathname: `/${provider}/${org}/${repo}/settings`,
               }}
             >
-              {t('common.settings')}
+              {t("common.settings")}
             </Link>
           </>
         );
@@ -285,10 +265,10 @@ const Projects = () => {
     repo: r.pathWithNamespace,
     times: r.reportTimes || 0,
     maxCoverage: r.maxCoverage || 0,
-    latestAt: r.lastReportTime || '',
+    latestAt: r.lastReportTime || "",
     tags: (() => {
       try {
-        const arr = JSON.parse(r.tags || '[]');
+        const arr = JSON.parse(r.tags || "[]");
         return Array.isArray(arr) ? arr : [];
       } catch {
         return [];
@@ -303,21 +283,21 @@ const Projects = () => {
   return (
     <BasicLayout>
       <TextTypography
-        title={t('menus.projects')}
+        title={t("menus.projects")}
         icon={<FolderOutlined />}
         right={
           <Link to={`/projects/new`}>
-            <Button type={'primary'} icon={<PlusOutlined />}>
-              {t('projects.create')}
+            <Button type={"primary"} icon={<PlusOutlined />}>
+              {t("projects.create")}
             </Button>
           </Link>
         }
       />
 
-      <div className='mb-4 flex items-center gap-3'>
+      <div className="mb-4 flex items-center gap-3">
         <Select
           allowClear
-          placeholder='Bu'
+          placeholder="Bu"
           style={{ width: 160 }}
           value={selectedBu}
           onChange={(value) => setSelectedBu(value)}
@@ -325,14 +305,14 @@ const Projects = () => {
         />
         <div>
           <Input
-            style={{ width: '420px' }}
-            placeholder={t('projects.search_keywords')}
+            style={{ width: "420px" }}
+            placeholder={t("projects.search_keywords")}
             value={searchKeyword}
             onChange={(e) => setSearchKeyword(e.target.value)}
             onPressEnter={() => fetchRepos()}
             allowClear
             onClear={() => {
-              setSearchKeyword('');
+              setSearchKeyword("");
               // 延迟执行以确保 searchKeyword 已清空
               setTimeout(() => fetchRepos(), 0);
             }}
@@ -356,7 +336,7 @@ const Projects = () => {
       <CardPrimary>
         <Table<ProjectRow>
           showSorterTooltip={false}
-          rowKey='id'
+          rowKey="id"
           columns={columns}
           dataSource={data}
           loading={loading}

@@ -1,13 +1,12 @@
-import { Typography } from 'antd';
-import { useMemo } from 'react';
+import { Typography } from "antd";
+import { useMemo } from "react";
 
 const AppFooter = () => {
   // 计算相对时间
   const buildTimeRelative = useMemo(() => {
-    const buildTimeStr =
-      typeof __BUILD_TIME__ !== 'undefined' ? __BUILD_TIME__ : null;
+    const buildTimeStr = typeof __BUILD_TIME__ !== "undefined" ? __BUILD_TIME__ : null;
     if (!buildTimeStr) {
-      return '1小时前';
+      return "1小时前";
     }
 
     try {
@@ -20,7 +19,7 @@ const AppFooter = () => {
       const diffDays = Math.floor(diffHours / 24);
 
       if (diffSeconds < 60) {
-        return '刚刚';
+        return "刚刚";
       } else if (diffMinutes < 60) {
         return `${diffMinutes}分钟前`;
       } else if (diffHours < 24) {
@@ -29,32 +28,24 @@ const AppFooter = () => {
         return `${diffDays}天前`;
       } else {
         // 超过7天，显示具体日期
-        return buildTime.toLocaleDateString('zh-CN', {
-          year: 'numeric',
-          month: 'short',
-          day: 'numeric',
+        return buildTime.toLocaleDateString("zh-CN", {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
         });
       }
     } catch {
-      return '1小时前';
+      return "1小时前";
     }
   }, []);
 
   // 构建信息（从构建时注入）
-  const branch =
-    typeof __GIT_BRANCH__ !== 'undefined' ? __GIT_BRANCH__ : 'canary';
-  const commitHash =
-    typeof __GIT_COMMIT_HASH__ !== 'undefined'
-      ? __GIT_COMMIT_HASH__
-      : 'dbb4d73';
+  const branch = typeof __GIT_BRANCH__ !== "undefined" ? __GIT_BRANCH__ : "canary";
+  const commitHash = typeof __GIT_COMMIT_HASH__ !== "undefined" ? __GIT_COMMIT_HASH__ : "dbb4d73";
   const commitHashFull =
-    typeof __GIT_COMMIT_HASH_FULL__ !== 'undefined'
-      ? __GIT_COMMIT_HASH_FULL__
-      : '';
+    typeof __GIT_COMMIT_HASH_FULL__ !== "undefined" ? __GIT_COMMIT_HASH_FULL__ : "";
   const githubRepo =
-    typeof __GITHUB_REPO__ !== 'undefined'
-      ? __GITHUB_REPO__
-      : 'canyon-project/canyon';
+    typeof __GITHUB_REPO__ !== "undefined" ? __GITHUB_REPO__ : "canyon-project/canyon";
 
   // 构建 commit 链接（使用完整 hash）
   const commitUrl = commitHashFull
@@ -70,7 +61,7 @@ const AppFooter = () => {
             Canyon JavaScript Code Coverage Solution.
           </Typography.Text>
           <Typography.Text type="secondary" className="text-sm">
-            构建于 {buildTimeRelative} · {branch} ·{' '}
+            构建于 {buildTimeRelative} · {branch} ·{" "}
             <a
               href={commitUrl}
               target="_blank"

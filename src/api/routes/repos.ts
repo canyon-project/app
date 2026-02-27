@@ -13,7 +13,8 @@ const checkRoute = createRoute({
   method: "get",
   path: "/check",
   summary: "校验仓库信息",
-  description: "从 GitLab/GitHub 拉取仓库信息，用于添加仓库前的校验。需提供 repoID（平台数字 ID）和 provider。",
+  description:
+    "从 GitLab/GitHub 拉取仓库信息，用于添加仓库前的校验。需提供 repoID（平台数字 ID）和 provider。",
   tags: ["仓库"],
   request: {
     query: z.object({
@@ -58,12 +59,19 @@ const listRoute = createRoute({
   method: "get",
   path: "/",
   summary: "获取仓库列表",
-  description: "返回所有仓库，支持按 bu 筛选、按 id/pathWithNamespace 搜索。附带覆盖率统计（reportTimes、lastReportTime）。",
+  description:
+    "返回所有仓库，支持按 bu 筛选、按 id/pathWithNamespace 搜索。附带覆盖率统计（reportTimes、lastReportTime）。",
   tags: ["仓库"],
   request: {
     query: z.object({
-      bu: z.string().optional().openapi({ param: { name: "bu", in: "query" } }),
-      search: z.string().optional().openapi({ param: { name: "search", in: "query" } }),
+      bu: z
+        .string()
+        .optional()
+        .openapi({ param: { name: "bu", in: "query" } }),
+      search: z
+        .string()
+        .optional()
+        .openapi({ param: { name: "search", in: "query" } }),
     }),
   },
   responses: {
@@ -82,7 +90,8 @@ const getRoute = createRoute({
   method: "get",
   path: "/{id}",
   summary: "获取仓库详情",
-  description: "根据 id（支持完整 id、pathWithNamespace 或数字 ID）返回仓库详情。会尝试从 SCM 拉取最新 description。",
+  description:
+    "根据 id（支持完整 id、pathWithNamespace 或数字 ID）返回仓库详情。会尝试从 SCM 拉取最新 description。",
   tags: ["仓库"],
   request: { params: IdParamSchema },
   responses: {
@@ -230,7 +239,10 @@ reposApi.openapi(buRoute, async (c) => {
 
 reposApi.openapi(listRoute, async (c) => {
   const query = c.req.valid("query");
-  const where: { bu?: string; OR?: Array<{ id?: { contains: string }; pathWithNamespace?: { contains: string } }> } = {};
+  const where: {
+    bu?: string;
+    OR?: Array<{ id?: { contains: string }; pathWithNamespace?: { contains: string } }>;
+  } = {};
   if (query?.bu) where.bu = query.bu;
   if (query?.search) {
     where.OR = [
@@ -250,10 +262,7 @@ reposApi.openapi(listRoute, async (c) => {
   });
 
   const statsMap = new Map(
-    coverageStats.map((s) => [
-      s.repoID,
-      { count: s._count.id, lastReportTime: s._max.createdAt },
-    ]),
+    coverageStats.map((s) => [s.repoID, { count: s._count.id, lastReportTime: s._max.createdAt }]),
   );
 
   const reposWithStats = rows.map((r) => {
@@ -264,8 +273,6 @@ reposApi.openapi(listRoute, async (c) => {
       lastReportTime: stats?.lastReportTime ?? null,
     });
   });
-
-  
 
   reposWithStats.sort((a, b) => {
     const aTime = a.lastReportTime ? new Date(a.lastReportTime).getTime() : 0;

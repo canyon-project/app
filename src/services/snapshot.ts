@@ -1,4 +1,4 @@
-import { request } from './request';
+import { request } from "./request";
 
 export type SnapshotFormValues = {
   repoID: string;
@@ -24,7 +24,7 @@ export type SnapshotRecord = {
  */
 export function getSnapshotRecords(repoID: string, provider: string) {
   return request
-    .get<{ data: SnapshotRecord[] }>('/api/snapshot/records', {
+    .get<{ data: SnapshotRecord[] }>("/api/snapshot/records", {
       params: { repoID, provider },
     })
     .then((res) => res.data.data ?? []);
@@ -34,7 +34,7 @@ export function getSnapshotRecords(repoID: string, provider: string) {
  * 创建快照
  */
 export function createSnapshot(data: SnapshotFormValues) {
-  return request.post('/api/snapshot/create', data);
+  return request.post("/api/snapshot/create", data);
 }
 
 /**
@@ -66,6 +66,6 @@ export function deleteSnapshot(id: string) {
  */
 export function downloadSnapshot(id: string): Promise<Blob> {
   return request
-    .get(`/api/snapshot/${id}/download`, { responseType: 'blob' })
+    .get(`/api/snapshot/${id}/download`, { responseType: "blob" })
     .then((res) => res.data as Blob);
 }

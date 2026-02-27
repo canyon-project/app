@@ -3,17 +3,15 @@ import { OpenAPIHono } from "@hono/zod-openapi";
 import { prisma } from "@/api/lib/prisma.ts";
 import { getCoverageMapForCommit } from "@/api/lib/coverage/coverage-map-for-commit.ts";
 import { getCommitsByRepoID } from "@/api/lib/coverage/commits.ts";
-import {
-  CoverageMapQuerySchema,
-  CoverageCommitsQuerySchema,
-} from "@/shared/schemas/coverage.ts";
+import { CoverageMapQuerySchema, CoverageCommitsQuerySchema } from "@/shared/schemas/coverage.ts";
 import { genSummaryMapByCoverageMap } from "canyon-data";
 
 const coverageMapGetRoute = createRoute({
   method: "get",
   path: "/map",
   summary: "获取覆盖率 Map",
-  description: "根据 subject=commit、subjectID（sha）、provider、repoID 等获取指定 commit 的覆盖率 map 数据。",
+  description:
+    "根据 subject=commit、subjectID（sha）、provider、repoID 等获取指定 commit 的覆盖率 map 数据。",
   tags: ["覆盖率"],
   request: { query: CoverageMapQuerySchema },
   responses: {
@@ -71,10 +69,7 @@ async function resolveRepoIDForCoverage(repoID: string): Promise<string> {
 
   const repo = await prisma.repo.findFirst({
     where: {
-      OR: [
-        { id: { contains: trimmed } },
-        { pathWithNamespace: trimmed },
-      ],
+      OR: [{ id: { contains: trimmed } }, { pathWithNamespace: trimmed }],
     },
   });
   if (repo) {

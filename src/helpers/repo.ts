@@ -3,7 +3,7 @@
  * 若 id 中无 '-' 则原样返回（兼容已是短 id 的情况）。
  */
 export function getRepoIDFromId(id: string | undefined | null): string {
-  const s = id || '';
-  const idx = s.indexOf('-');
+  const s = id || "";
+  const idx = s.indexOf("-");
   return idx === -1 ? s : s.slice(idx + 1);
 }
