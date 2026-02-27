@@ -41,6 +41,7 @@ api.doc("/doc", {
     title: "API",
     description: "全栈 Web 应用 API，包含文章、仓库、源码、覆盖率等模块。",
   },
+  servers: [{ url: "/api", description: "API base path" }],
 });
 
 api.get("/ui", swaggerUI({ url: "/api/doc" }));
