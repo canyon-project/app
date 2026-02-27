@@ -2,6 +2,7 @@ import { createRoute } from "@hono/zod-openapi";
 import { OpenAPIHono } from "@hono/zod-openapi";
 import { prisma } from "@/api/lib/prisma.ts";
 import { prisma as prismaSqlite } from "@/api/lib/prisma-sqlite.ts";
+import { remapCoverageByOld } from "canyon-map";
 import {
   generateObjectSignature,
   encodeObjectToCompressedBuffer,
@@ -142,13 +143,7 @@ function calculateSceneKey(scene: Record<string, unknown>): string {
 
 collectApi.openapi(coverageMapInitRoute, async (c) => {
   const body = c.req.valid("json");
-
-  const filteredCoverage: Record<string, unknown> = {};
-  for (const [key, value] of Object.entries(body.coverage)) {
-    if (value && typeof value === "object" && !("oldPath" in (value as object))) {
-      filteredCoverage[key] = value;
-    }
-  }
+  const coverage = body.coverage as Record<string, Record<string, unknown>>;
 
   let sha = body.sha;
   let provider = body.provider;
@@ -156,7 +151,7 @@ collectApi.openapi(coverageMapInitRoute, async (c) => {
   let instrumentCwd = body.instrumentCwd;
   let buildTarget = body.buildTarget;
 
-  const coverageValues = Object.values(filteredCoverage);
+  const coverageValues = Object.values(coverage);
   if (coverageValues.length === 0) {
     return c.json(
       {
@@ -236,7 +231,13 @@ collectApi.openapi(coverageMapInitRoute, async (c) => {
     }
   }
 
-  const mapItems = Object.entries(filteredCoverage).map(([filePath, entry]) => {
+  // remapCoverageByOld 需要每个 entry 有 path，用于 source map 还原
+  const coverageForRemap = Object.fromEntries(
+    Object.entries(coverage).map(([fp, e]) => [fp, { ...e, path: fp }]),
+  );
+  const originalCoverage = await remapCoverageByOld(coverageForRemap);
+
+  const mapItems = Object.entries(coverage).map(([filePath, entry]) => {
     const e = entry as Record<string, unknown>;
     const chunkMap = {
       statementMap: e.statementMap,
@@ -245,13 +246,34 @@ collectApi.openapi(coverageMapInitRoute, async (c) => {
     };
     const coverageMapHash = generateObjectSignature(chunkMap);
     const fileContentHash = (e.contentHash as string) || "";
-    const fullFilePath = filePath;
+    const originalEntry = (
+      Object.values(originalCoverage) as Array<{ path?: string; oldPath?: string }>
+    ).find((o) => o.oldPath === filePath);
+
+    if (e.inputSourceMap && originalEntry) {
+      const inputSourceMapCoverageMapHash = generateObjectSignature({
+        ...chunkMap,
+        inputSourceMap: 1,
+      });
+      const sourceMap = e.inputSourceMap as object;
+      return {
+        map: chunkMap,
+        coverageMapHash: inputSourceMapCoverageMapHash,
+        fileContentHash,
+        fullFilePath: originalEntry.path ?? filePath,
+        restoreFullFilePath: originalEntry.oldPath ?? "",
+        sourceMap,
+        sourceMapHash: generateObjectSignature(sourceMap),
+      };
+    }
+
     return {
       map: chunkMap,
       coverageMapHash,
       fileContentHash,
-      fullFilePath,
+      fullFilePath: filePath,
       restoreFullFilePath: "",
+      sourceMap: undefined,
       sourceMapHash: "",
     };
   });
@@ -259,11 +281,12 @@ collectApi.openapi(coverageMapInitRoute, async (c) => {
   for (const item of mapItems) {
     const hash = `${item.coverageMapHash}|${item.fileContentHash}`;
     try {
+      const compressedMap = encodeObjectToCompressedBuffer(item.map);
       await prisma.coverageMap.upsert({
         where: { hash },
         create: {
           hash,
-          map: encodeObjectToCompressedBuffer(item.map),
+          map: new Uint8Array(compressedMap),
           createdAt: now,
         },
         update: {},
@@ -277,9 +300,9 @@ collectApi.openapi(coverageMapInitRoute, async (c) => {
     id: `${buildHash}|${item.fullFilePath}`,
     buildHash,
     fullFilePath: item.fullFilePath,
-    restoreFullFilePath: item.restoreFullFilePath,
+    restoreFullFilePath: item.restoreFullFilePath ?? "",
     coverageMapHash: item.coverageMapHash,
-    sourceMapHash: item.sourceMapHash,
+    sourceMapHash: item.sourceMapHash ?? "",
     fileContentHash: item.fileContentHash,
   }));
 
@@ -288,7 +311,19 @@ collectApi.openapi(coverageMapInitRoute, async (c) => {
     skipDuplicates: true,
   });
 
-  const hitEntities = Object.entries(filteredCoverage).map(([filePath, entry]) => {
+  // 有 inputSourceMap 的条目需写入 CoverageSourceMap
+  const sourceMapItems = mapItems.filter((i) => i.sourceMap);
+  if (sourceMapItems.length > 0) {
+    await prisma.coverageSourceMap.createMany({
+      data: sourceMapItems.map((item) => ({
+        hash: item.sourceMapHash!,
+        sourceMap: new Uint8Array(encodeObjectToCompressedBuffer(item.sourceMap!)),
+      })),
+      skipDuplicates: true,
+    });
+  }
+
+  const hitEntities = Object.entries(coverage).map(([filePath, entry]) => {
     const e = entry as Record<string, unknown>;
     const s = (e?.s as object) || {};
     const f = (e?.f as object) || {};
