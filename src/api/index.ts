@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { cors } from "hono/cors";
 import { OpenAPIHono } from "@hono/zod-openapi";
 import { swaggerUI } from "@hono/swagger-ui";
 import { serveStatic } from "@hono/node-server/serve-static";
@@ -47,6 +48,8 @@ api.doc("/doc", {
 api.get("/ui", swaggerUI({ url: "/api/doc" }));
 
 api.get("/health", (c) => c.text("OK"));
+
+app.use("/api/*", cors());
 
 app.route("/api", api);
 
