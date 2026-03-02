@@ -8,7 +8,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-
 model User {
   id        String   @id
   username  String
@@ -17,7 +16,7 @@ model User {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  @@map("canyon_app_user")
+  @@map("canyon_next_user")
 }
 
 model Repo {
@@ -30,14 +29,14 @@ model Repo {
   createdAt         DateTime @map("created_at")
   updatedAt         DateTime @map("updated_at")
 
-  @@map("canyon_app_repo")
+  @@map("canyon_next_repo")
 }
 
 model Commit {
   id      String @id
   content Json
 
-  @@map("canyon_app_commit")
+  @@map("canyon_next_commit")
 }
 
 // GitHub PR | GitLab Merge Request（PR/MR 信息，用于 pull/merge_requests 覆盖率）
@@ -45,7 +44,7 @@ model MergeRequest {
   id      String @id
   content Json
 
-  @@map("canyon_app_merge_request")
+  @@map("canyon_next_merge_request")
 }
 
 model Diff {
@@ -60,7 +59,7 @@ model Diff {
   subject   String
   subjectID String @map("subject_id")
 
-  @@map("canyon_app_diff")
+  @@map("canyon_next_diff")
 }
 
 model Infra {
@@ -72,7 +71,7 @@ model Infra {
   isEncrypted            Boolean  @default(false) @map("isEncrypted")
   lastSyncedEnvFileValue String?  @map("lastSyncedEnvFileValue")
 
-  @@map("canyon_app_infra_config")
+  @@map("canyon_next_infra_config")
 }
 
 model Coverage {
@@ -101,7 +100,7 @@ model Coverage {
   createdAt DateTime @map("created_at")
   updatedAt DateTime @map("updated_at")
 
-  @@map("canyon_app_coverage")
+  @@map("canyon_next_coverage")
 }
 
 model CoverageMapRelation {
@@ -117,7 +116,7 @@ model CoverageMapRelation {
   // 文件内容hash，未来多build合并提供依据
   fileContentHash     String @map("file_content_hash")
 
-  @@map("canyon_app_coverage_map_relation")
+  @@map("canyon_next_coverage_map_relation")
 }
 
 model CoverageMap {
@@ -125,14 +124,14 @@ model CoverageMap {
   map       Bytes
   createdAt DateTime @map("created_at")
 
-  @@map("canyon_app_coverage_map")
+  @@map("canyon_next_coverage_map")
 }
 
 model CoverageSourceMap {
   hash      String @id
   sourceMap Bytes  @map("source_map")
 
-  @@map("canyon_app_coverage_source_map")
+  @@map("canyon_next_coverage_source_map")
 }
 
 model CoverageHit {
@@ -146,7 +145,7 @@ model CoverageHit {
   inputSourceMap Int?     @map("input_source_map")
   createdAt      DateTime @map("created_at")
 
-  @@map("canyon_app_coverage_hit")
+  @@map("canyon_next_coverage_hit")
 }
 
 model CoverageLock {
@@ -154,5 +153,5 @@ model CoverageLock {
   lockedAt   DateTime @map("locked_at")
   lockedBy   String   @map("locked_by")
 
-  @@map("canyon_app_coverage_lock")
+  @@map("canyon_next_coverage_lock")
 }
