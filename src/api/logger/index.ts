@@ -61,32 +61,3 @@ export function logger(data: LogMessage) {
 
   console.log(logLine);
 }
-
-const originalConsoleError = console.error;
-
-/** 重写 console.error，所有错误输出都会经过 logger，同时保留原有控制台输出 */
-export function setupConsoleErrorCapture() {
-  console.error = (...args: unknown[]) => {
-    const message = args.map((a) => (a instanceof Error ? a.message : String(a))).join(" ");
-    const err = args.find((a): a is Error => a instanceof Error);
-    logger({
-      type: "error",
-      title: "console.error",
-      message: message || (err?.message ?? ""),
-      addInfo: err ? { name: err.name, stack: err.stack } : { args: args.map(String) },
-    });
-    originalConsoleError.apply(console, args);
-  };
-}
-
-/** 注册全局未捕获错误监听，通过 console.error 输出（会走上面的 capture） */
-export function setupGlobalErrorHandlers() {
-  process.on("uncaughtException", (err) => {
-    console.error(err);
-    process.exit(1);
-  });
-
-  process.on("unhandledRejection", (reason) => {
-    console.error(reason instanceof Error ? reason : new Error(String(reason)));
-  });
-}
