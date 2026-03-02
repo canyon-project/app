@@ -64,14 +64,6 @@ collectApi.openapi(coverageClientRoute, async (c) => {
     return c.json({ success: false, message: "coverage 中缺少 buildHash" }, 400);
   }
 
-  await prismaSqlite.coverageQueue.create({
-    data: {
-      payload: JSON.stringify({ coverage, buildHash, sceneKey }),
-      status: "PENDING",
-      pid: process.pid,
-    },
-  });
-
   const prismacoverage = await prisma.coverage.findFirst({
     where: { buildHash },
   });
@@ -88,6 +80,16 @@ collectApi.openapi(coverageClientRoute, async (c) => {
   }
 
   try {
+    // 写入队列，异步处理
+    await prismaSqlite.coverageQueue.create({
+      data: {
+        payload: JSON.stringify({ coverage, buildHash, sceneKey }),
+        status: "PENDING",
+        pid: process.pid,
+      },
+    });
+
+    // 同步处理
     const id = `${buildHash}|${sceneKey}`;
     const scene = body.scene || {};
     const builds = Array.isArray(prismacoverage.builds) ? prismacoverage.builds : [];
