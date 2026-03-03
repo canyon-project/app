@@ -53,6 +53,7 @@ type BuildTargetSceneInfo = {
 
 type CommitRecord = {
   sha: string;
+  commitUrl?: string | null;
   branch: string;
   compareTarget: string;
   commitMessage: string;
@@ -107,6 +108,8 @@ const CommitsPage = () => {
     try {
       const data = await getCommits({
         repoID: repo.id,
+        pathWithNamespace: repo.pathWithNamespace,
+        provider: params.provider,
         page: 1,
         pageSize: 10000,
       });
@@ -196,13 +199,25 @@ const CommitsPage = () => {
       width: 120,
       render: (_: string, record: FlatCommitRow) => (
         <Space size={4}>
-          <Link
-            to={`/${params.provider}/${params.org}/${params.repo}/commit/${record.sha}`}
-            className="font-mono tabular-nums"
-            style={{ width: "7ch", display: "inline-block", textAlign: "right" }}
-          >
-            {record.sha.substring(0, 7)}
-          </Link>
+          {record.commitUrl ? (
+            <a
+              href={record.commitUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="font-mono tabular-nums"
+              style={{ width: "7ch", display: "inline-block", textAlign: "right" }}
+            >
+              {record.sha.substring(0, 7)}
+            </a>
+          ) : (
+            <Link
+              to={`/${params.provider}/${params.org}/${params.repo}/commit/${record.sha}`}
+              className="font-mono tabular-nums"
+              style={{ width: "7ch", display: "inline-block", textAlign: "right" }}
+            >
+              {record.sha.substring(0, 7)}
+            </Link>
+          )}
           <Tooltip title={t("common.copy")}>
             <CopyOutlined
               className="cursor-pointer text-gray-400 hover:text-gray-600"

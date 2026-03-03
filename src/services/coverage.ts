@@ -2,10 +2,10 @@ import { request } from "./request";
 
 export type CommitsQuery = {
   repoID: string;
+  pathWithNamespace?: string;
+  provider?: string;
   page?: number;
   pageSize?: number;
-  search?: string;
-  defaultBranch?: string;
 };
 
 /**

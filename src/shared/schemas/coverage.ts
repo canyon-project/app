@@ -57,6 +57,14 @@ export const CoverageMapQuerySchema = z
 export const CoverageCommitsQuerySchema = z
   .object({
     repoID: z.string().openapi({ param: { name: "repoID", in: "query" } }),
+    pathWithNamespace: z
+      .string()
+      .optional()
+      .openapi({ param: { name: "pathWithNamespace", in: "query" } }),
+    provider: z
+      .string()
+      .optional()
+      .openapi({ param: { name: "provider", in: "query" } }),
     page: z.coerce
       .number()
       .optional()

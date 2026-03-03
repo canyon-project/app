@@ -12,6 +12,8 @@ type BuildTargetSceneInfo = {
 
 export type CommitRecord = {
   sha: string;
+  /** SCM 上的 commit 页面 URL（GitLab/GitHub） */
+  commitUrl?: string | null;
   branch: string;
   compareTarget: string;
   commitMessage: string;

@@ -4,6 +4,7 @@ import { prisma } from "@/api/lib/prisma.ts";
 import { getCoverageMapForCommit } from "@/api/lib/coverage/coverage-map-for-commit.ts";
 import { getCoverageMapForCr } from "@/api/lib/coverage/coverage-map-for-cr.ts";
 import { getCoverageMapForAccumulative } from "@/api/lib/coverage/coverage-map-for-accumulative.ts";
+import { buildCommitUrl } from "@/api/lib/commit-url.ts";
 import { getCommitsByRepoID } from "@/api/lib/coverage/commits.ts";
 import { CoverageMapQuerySchema, CoverageCommitsQuerySchema } from "@/shared/schemas/coverage.ts";
 import { genSummaryMapByCoverageMap } from "canyon-data";
@@ -175,12 +176,34 @@ coverageApi.openapi(coverageSummaryMapRoute, async (c) => {
 });
 
 coverageApi.openapi(coverageCommitsRoute, async (c) => {
-  const { repoID, page, pageSize } = c.req.valid("query");
+  const { repoID, pathWithNamespace, provider, page, pageSize } = c.req.valid("query");
   const resolvedRepoID = await resolveRepoIDForCoverage(repoID);
   const commits = await getCommitsByRepoID(resolvedRepoID);
   const total = commits.length;
   const start = (page - 1) * pageSize;
   const data = commits.slice(start, start + pageSize);
+
+  let pathForUrl = pathWithNamespace || (resolvedRepoID.includes("/") ? resolvedRepoID : null);
+  if (!pathForUrl) {
+    const repoRow = await prisma.repo.findFirst({
+      where: {
+        OR: [
+          { id: resolvedRepoID },
+          { id: { contains: resolvedRepoID } },
+          { pathWithNamespace: resolvedRepoID },
+        ],
+      },
+      select: { pathWithNamespace: true },
+    });
+    pathForUrl = repoRow?.pathWithNamespace ?? null;
+  }
+  const providerForUrl = provider || (commits[0] as { provider?: string } | undefined)?.provider;
+  if (pathForUrl && providerForUrl) {
+    for (const commit of data) {
+      commit.commitUrl = buildCommitUrl(providerForUrl, pathForUrl, commit.sha);
+    }
+  }
+
   return c.json({ data, total });
 });
 
