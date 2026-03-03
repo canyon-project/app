@@ -29,3 +29,15 @@ export interface CommitInfo {
   parent_ids: string[];
   stats: { additions: number };
 }
+
+/** 从 SCM API 拉取的完整 commit 实体，用于存储到 DB */
+export interface CommitDetail {
+  sha: string;
+  provider: string;
+  repoID: string;
+  commitMessage: string;
+  authorName: string;
+  authorEmail: string;
+  createdAt: string;
+  [key: string]: unknown;
+}

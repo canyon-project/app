@@ -199,6 +199,9 @@
     }
   },
   "common": {
+    "copy": "コピー",
+    "copy_success": "クリップボードにコピーしました",
+    "copy_failed": "コピーに失敗しました",
     "option": "オプション",
     "detail": "詳細",
     "settings": "設定",

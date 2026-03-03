@@ -1,6 +1,23 @@
-import { BranchesOutlined, DownOutlined, SearchOutlined, UserOutlined } from "@ant-design/icons";
+import {
+  BranchesOutlined,
+  CopyOutlined,
+  DownOutlined,
+  SearchOutlined,
+  UserOutlined,
+} from "@ant-design/icons";
 import type { MenuProps } from "antd";
-import { Avatar, Dropdown, Input, message, Space, Switch, Table, Tag, Typography } from "antd";
+import {
+  Avatar,
+  Dropdown,
+  Input,
+  message,
+  Space,
+  Switch,
+  Table,
+  Tag,
+  Tooltip,
+  Typography,
+} from "antd";
 import type { ColumnsType } from "antd/es/table";
 import dayjs from "dayjs";
 import { useEffect, useMemo, useState } from "react";
@@ -182,11 +199,32 @@ const CommitsPage = () => {
       ),
       dataIndex: "sha",
       key: "sha",
-      width: 100,
+      width: 120,
       render: (_: string, record: FlatCommitRow) => (
-        <Link to={`/${params.provider}/${params.org}/${params.repo}/commit/${record.sha}`}>
-          {record.sha.substring(0, 7)}
-        </Link>
+        <Space size={4}>
+          <Link
+            to={`/${params.provider}/${params.org}/${params.repo}/commit/${record.sha}`}
+            className="font-mono tabular-nums"
+            style={{ width: "7ch", display: "inline-block", textAlign: "right" }}
+          >
+            {record.sha.substring(0, 7)}
+          </Link>
+          <Tooltip title={t("common.copy")}>
+            <CopyOutlined
+              className="cursor-pointer text-gray-400 hover:text-gray-600"
+              onClick={async (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                try {
+                  await navigator.clipboard.writeText(record.sha);
+                  message.success(t("common.copy_success"));
+                } catch {
+                  message.error(t("common.copy_failed"));
+                }
+              }}
+            />
+          </Tooltip>
+        </Space>
       ),
     },
     {

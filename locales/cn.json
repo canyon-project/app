@@ -200,6 +200,9 @@
   },
   "common": {
     "bu": "Bu",
+    "copy": "复制",
+    "copy_success": "已复制到剪贴板",
+    "copy_failed": "复制失败",
     "option": "操作",
     "detail": "详情",
     "settings": "配置",

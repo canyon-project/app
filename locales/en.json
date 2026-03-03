@@ -200,6 +200,9 @@
     }
   },
   "common": {
+    "copy": "Copy",
+    "copy_success": "Copied to clipboard",
+    "copy_failed": "Copy failed",
     "option": "Option",
     "detail": "Detail",
     "settings": "Settings",

@@ -1,8 +1,8 @@
 import { createRoute, z } from "@hono/zod-openapi";
 import { OpenAPIHono } from "@hono/zod-openapi";
-import { createScmAdapter } from "@/api/scm/index.ts";
-import { getInfra, InfraKey } from "@/api/lib/infra.ts";
 import { prisma } from "@/api/lib/prisma.ts";
+import { ensureCommitFromScm, toCommitId } from "@/api/lib/commit.ts";
+import { getScm } from "@/api/lib/scm.ts";
 import { resolveRepoAndRef } from "@/api/lib/source/get-file-content.ts";
 import { diffLine } from "@/api/lib/source/diff-line.ts";
 
@@ -135,21 +135,6 @@ const diffDeleteRoute = createRoute({
 
 const sourceApi = new OpenAPIHono();
 
-function getScm(provider: string) {
-  if (provider === "gitlab") {
-    const base = getInfra(InfraKey.GITLAB_BASE_URL);
-    const token = getInfra(InfraKey.GITLAB_PRIVATE_TOKEN);
-    if (!base || !token || token === "-") return null;
-    return createScmAdapter({ type: "gitlab", base, token });
-  }
-  if (provider === "github") {
-    const token = getInfra(InfraKey.GITHUB_PRIVATE_TOKEN);
-    if (!token || token === "-") return null;
-    return createScmAdapter({ type: "github", token });
-  }
-  return null;
-}
-
 sourceApi.openapi(sourceRoute, async (c) => {
   const q = c.req.valid("query");
   const { repo_id, provider, path } = q;
@@ -273,7 +258,7 @@ sourceApi.openapi(diffGetRoute, async (c) => {
     allCommits.add(r.to);
   }
 
-  const commitIds = Array.from(allCommits).map((sha) => `${provider}${repoID}${sha}`);
+  const commitIds = Array.from(allCommits).map((sha) => toCommitId(provider, repoID, sha));
   const commits = await prisma.commit.findMany({
     where: { id: { in: commitIds } },
     select: { id: true, content: true },
@@ -285,7 +270,7 @@ sourceApi.openapi(diffGetRoute, async (c) => {
   >();
   for (const c of commits) {
     const content = c.content as Record<string, unknown> | null;
-    const sha = (content?.sha as string) ?? c.id.replace(provider + repoID, "");
+    const sha = (content?.sha as string) ?? c.id.replace(`${provider}-${repoID}-`, "");
     commitInfoMap.set(sha, {
       commitMessage: content?.commitMessage as string,
       authorName: content?.authorName as string,
@@ -340,26 +325,15 @@ sourceApi.openapi(diffPostRoute, async (c) => {
     return c.json({ error: "subjectID 格式错误，from 和 to 不能为空" }, 400);
   }
 
-  const commitId = (sha: string) => `${provider}${repoID}${sha}`;
-  for (const sha of [fromSha, toSha]) {
-    const id = commitId(sha);
-    const existing = await prisma.commit.findUnique({ where: { id } });
-    if (!existing) {
-      try {
-        await prisma.commit.create({
-          data: { id, content: { sha, provider, repoID } },
-        });
-      } catch {
-        // ignore
-      }
-    }
+  const scm = getScm(provider);
+  for (const s of [fromSha, toSha]) {
+    await ensureCommitFromScm(prisma, scm, provider, repoID, s);
   }
 
   await prisma.diff.deleteMany({
     where: { provider, repoID, subjectID, subject },
   });
 
-  const scm = getScm(provider);
   if (!scm) return c.json({ error: "SCM 未配置" }, 502);
 
   const diffResult = await diffLine(scm, repoID, fromSha, toSha);

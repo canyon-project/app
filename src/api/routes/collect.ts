@@ -2,6 +2,8 @@ import { createRoute } from "@hono/zod-openapi";
 import { OpenAPIHono } from "@hono/zod-openapi";
 import { prisma } from "@/api/lib/prisma.ts";
 import { prisma as prismaSqlite } from "@/api/lib/prisma-sqlite.ts";
+import { ensureCommitFromScm } from "@/api/lib/commit.ts";
+import { getScm } from "@/api/lib/scm.ts";
 import { remapCoverageByOld } from "canyon-map";
 import {
   generateObjectSignature,
@@ -218,20 +220,7 @@ collectApi.openapi(coverageMapInitRoute, async (c) => {
     });
   }
 
-  const commitId = `${provider}${repoID}${sha}`;
-  const existingCommit = await prisma.commit.findUnique({ where: { id: commitId } });
-  if (!existingCommit) {
-    try {
-      await prisma.commit.create({
-        data: {
-          id: commitId,
-          content: { sha, provider, repoID },
-        },
-      });
-    } catch {
-      // 忽略
-    }
-  }
+  await ensureCommitFromScm(prisma, getScm(provider), provider, repoID, sha);
 
   // remapCoverageByOld 需要每个 entry 有 path，用于 source map 还原
   const coverageForRemap = Object.fromEntries(
