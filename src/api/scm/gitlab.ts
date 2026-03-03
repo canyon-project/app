@@ -34,6 +34,7 @@ export class GitlabAdapter implements ScmAdapter {
       id?: number;
       path_with_namespace?: string;
       description?: string;
+      bu?: string;
     }>(url, {
       headers: this.headers(),
       timeout: 10000,
@@ -45,6 +46,7 @@ export class GitlabAdapter implements ScmAdapter {
       id: String(data.id),
       pathWithNamespace: data.path_with_namespace,
       description: data.description ?? "",
+      ...(data.bu != null && { bu: String(data.bu) }),
     };
   }
 

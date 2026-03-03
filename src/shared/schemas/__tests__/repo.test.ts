@@ -5,11 +5,10 @@ describe("CreateRepoSchema", () => {
   it("应通过合法输入", () => {
     const result = CreateRepoSchema.safeParse({
       provider: "gitlab",
-      pathWithNamespace: "owner/repo",
+      repoID: "118075",
     });
     expect(result.success).toBe(true);
     if (result.success) {
-      expect(result.data.description).toBe("");
       expect(result.data.config).toBe("");
       expect(result.data.bu).toBe("");
     }
@@ -18,15 +17,15 @@ describe("CreateRepoSchema", () => {
   it("provider 为空应失败", () => {
     const result = CreateRepoSchema.safeParse({
       provider: "",
-      pathWithNamespace: "owner/repo",
+      repoID: "118075",
     });
     expect(result.success).toBe(false);
   });
 
-  it("pathWithNamespace 为空应失败", () => {
+  it("repoID 为空应失败", () => {
     const result = CreateRepoSchema.safeParse({
       provider: "gitlab",
-      pathWithNamespace: "",
+      repoID: "",
     });
     expect(result.success).toBe(false);
   });

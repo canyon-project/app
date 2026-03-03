@@ -110,7 +110,7 @@ const createRouteDef = createRoute({
   method: "post",
   path: "/",
   summary: "创建仓库",
-  description: "将 GitLab/GitHub 仓库添加到系统中，需提供 provider、pathWithNamespace。",
+  description: "将 GitLab/GitHub 仓库添加到系统中。必传 provider、repoID，通过 SCM 接口获取 pathWithNamespace、description 等。",
   tags: ["仓库"],
   request: {
     body: {
@@ -253,7 +253,14 @@ reposApi.openapi(listRoute, async (c) => {
   }
   const rows = await prisma.repo.findMany({ where });
 
-  const repoIdsForCoverage = rows.map((r) => r.id.split("-")[1] ?? r.id);
+  const repoIdsForCoverage = [
+    ...new Set(
+      rows.flatMap((r) => {
+        const idPart = r.id.includes("-") ? r.id.slice(r.id.indexOf("-") + 1) : r.id;
+        return [idPart, r.pathWithNamespace];
+      }),
+    ),
+  ];
 
   const coverageStats = await prisma.coverage.groupBy({
     by: ["repoID"],
@@ -267,8 +274,8 @@ reposApi.openapi(listRoute, async (c) => {
   );
 
   const reposWithStats = rows.map((r) => {
-    const repoID = r.id.split("-")[1] ?? r.id;
-    const stats = statsMap.get(repoID);
+    const repoID = r.id.includes("-") ? r.id.slice(r.id.indexOf("-") + 1) : r.id;
+    const stats = statsMap.get(repoID) ?? statsMap.get(r.pathWithNamespace);
     const resp = toResponse(r, {
       reportTimes: stats?.count ?? 0,
       lastReportTime: stats?.lastReportTime ?? null,
@@ -335,21 +342,45 @@ reposApi.openapi(getRoute, async (c) => {
 
 reposApi.openapi(createRouteDef, async (c) => {
   const body = c.req.valid("json");
-  const id = `${body.provider}:${body.pathWithNamespace}`;
-  const now = new Date();
-  const repo = await prisma.repo.create({
-    data: {
-      id,
-      provider: body.provider,
-      pathWithNamespace: body.pathWithNamespace,
-      description: body.description ?? "",
-      config: body.config ?? "",
-      bu: body.bu ?? "",
-      createdAt: now,
-      updatedAt: now,
-    },
-  });
-  return c.json(toResponse(repo), 201);
+  const p = body.provider.toLowerCase();
+  let scm = null;
+  if (p === "gitlab") {
+    const base = getInfra(InfraKey.GITLAB_BASE_URL);
+    const token = getInfra(InfraKey.GITLAB_PRIVATE_TOKEN);
+    if (!base || !token || token === "-") {
+      return c.json({ error: "GitLab 配置缺失" }, 400);
+    }
+    scm = createScmAdapter({ type: "gitlab", base, token });
+  } else if (p === "github") {
+    const token = getInfra(InfraKey.GITHUB_PRIVATE_TOKEN);
+    if (!token || token === "-") {
+      return c.json({ error: "GitHub 配置缺失" }, 400);
+    }
+    scm = createScmAdapter({ type: "github", token });
+  } else {
+    return c.json({ error: `不支持的 provider: ${body.provider}` }, 400);
+  }
+  try {
+    const info = await scm.getRepoInfo(body.repoID.trim());
+    const id = `${body.provider}-${info.id}`;
+    const now = new Date();
+    const repo = await prisma.repo.create({
+      data: {
+        id,
+        provider: body.provider,
+        pathWithNamespace: info.pathWithNamespace,
+        description: info.description ?? "",
+        config: body.config ?? "",
+        bu: info.bu ?? body.bu ?? "",
+        createdAt: now,
+        updatedAt: now,
+      },
+    });
+    return c.json(toResponse(repo), 201);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "获取仓库信息失败";
+    return c.json({ error: msg }, 400);
+  }
 });
 
 async function resolveRepoId(id: string): Promise<string | null> {

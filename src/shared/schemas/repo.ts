@@ -17,12 +17,11 @@ export const RepoSchema = z
   })
   .openapi("Repo");
 
-/** 创建 Repo 请求 schema */
+/** 创建 Repo 请求 schema：必传 provider、repoID，其余通过 SCM 接口获取 */
 export const CreateRepoSchema = z
   .object({
     provider: z.string().min(1).openapi({ example: "gitlab" }),
-    pathWithNamespace: z.string().min(1).openapi({ example: "owner/repo" }),
-    description: z.string().optional().default(""),
+    repoID: z.string().min(1).openapi({ example: "118075" }),
     config: z.string().optional().default(""),
     bu: z.string().optional().default(""),
   })
