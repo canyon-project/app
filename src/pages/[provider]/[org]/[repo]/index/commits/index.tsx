@@ -340,8 +340,8 @@ const CommitsPage = () => {
               {t("projects.commits.columns.overall")}
             </Link>
             {sceneDropdown}
-            <a onClick={() => openSnapshotCreate(record)}>{t("projects.snapshot.button.create")}</a>
-            <a onClick={openSnapshotRecords}>{t("projects.snapshot.button.records")}</a>
+            {/* <a onClick={() => openSnapshotCreate(record)}>{t("projects.snapshot.button.create")}</a>
+            <a onClick={openSnapshotRecords}>{t("projects.snapshot.button.records")}</a> */}
           </Space>
         );
       },
