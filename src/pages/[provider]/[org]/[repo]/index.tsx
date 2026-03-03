@@ -62,7 +62,7 @@ const ProjectDetailPage = () => {
               },
               {
                 title: params.repo,
-                href: `/${params.provider}/${params.org}/${params.repo}/accumulative`,
+                href: `/${params.provider}/${params.org}/${params.repo}/compare`,
               },
             ]}
           />
@@ -82,8 +82,8 @@ const ProjectDetailPage = () => {
         {!location.pathname.includes("/settings") && (
           <Tabs
             activeKey={
-              location.pathname.includes("/accumulative")
-                ? "accumulative"
+              location.pathname.includes("/compare")
+                ? "compare"
                 : location.pathname.includes("/multiple-commits")
                   ? "multiple-commits"
                   : "commits"
@@ -93,7 +93,7 @@ const ProjectDetailPage = () => {
             }}
             items={[
               {
-                key: "accumulative",
+                key: "compare",
                 label: t("projects.detail.tabs.comparison"),
               },
               { key: "commits", label: t("projects.detail.tabs.commits") },

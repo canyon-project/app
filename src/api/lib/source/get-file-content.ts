@@ -32,7 +32,7 @@ export interface GetFileContentParams {
   provider: string;
   ref?: string;
   sha?: string;
-  accumulativeID?: string;
+  compareID?: string;
   subject?: string;
   subjectID?: string;
 }
@@ -44,7 +44,7 @@ export async function resolveRepoAndRef(params: GetFileContentParams): Promise<{
   repoID: string;
   ref: string;
 } | null> {
-  const { repoID, ref, sha, accumulativeID, subject, subjectID, provider } = params;
+  const { repoID, ref, sha, compareID, subject, subjectID, provider } = params;
   let actualRepoID = repoID;
   let actualRef = ref ?? sha ?? "";
 
@@ -58,12 +58,12 @@ export async function resolveRepoAndRef(params: GetFileContentParams): Promise<{
     actualRef = head.headSha;
   }
 
-  if (!actualRef && accumulativeID && provider) {
+  if (!actualRef && compareID && provider) {
     if (provider === "gitlab" || provider.startsWith("gitlab")) {
       const base = getInfra(InfraKey.GITLAB_BASE_URL);
       const token = getInfra(InfraKey.GITLAB_PRIVATE_TOKEN);
       if (base && token && token !== "-") {
-        const url = `${base}/api/v4/projects/${encodeURIComponent(actualRepoID)}/merge_requests/${encodeURIComponent(accumulativeID)}`;
+        const url = `${base}/api/v4/projects/${encodeURIComponent(actualRepoID)}/merge_requests/${encodeURIComponent(compareID)}`;
         const { data } = await axios.get<{ diff_refs?: { head_sha?: string }; sha?: string }>(url, {
           headers: { "PRIVATE-TOKEN": token },
           timeout: 10000,
@@ -77,7 +77,7 @@ export async function resolveRepoAndRef(params: GetFileContentParams): Promise<{
           ? actualRepoID.split("/")
           : ["", actualRepoID];
         if (owner && repo) {
-          const url = `https://api.github.com/repos/${owner}/${repo}/pulls/${accumulativeID}`;
+          const url = `https://api.github.com/repos/${owner}/${repo}/pulls/${compareID}`;
           const { data } = await axios.get<{ head?: { sha?: string } }>(url, {
             headers: { Authorization: `token ${token}` },
             timeout: 10000,

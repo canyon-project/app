@@ -3,7 +3,7 @@ import { OpenAPIHono } from "@hono/zod-openapi";
 import { prisma } from "@/api/lib/prisma.ts";
 import { getCoverageMapForCommit } from "@/api/lib/coverage/coverage-map-for-commit.ts";
 import { getCoverageMapForCr } from "@/api/lib/coverage/coverage-map-for-cr.ts";
-import { getCoverageMapForAccumulative } from "@/api/lib/coverage/coverage-map-for-accumulative.ts";
+import { getCoverageMapForCompare } from "@/api/lib/coverage/coverage-map-for-compare.ts";
 import { buildCommitUrl } from "@/api/lib/commit-url.ts";
 import { getCommitsByRepoID } from "@/api/lib/coverage/commits.ts";
 import { CoverageMapQuerySchema, CoverageCommitsQuerySchema } from "@/shared/schemas/coverage.ts";
@@ -123,11 +123,11 @@ async function getMapBySubject(q: {
       if (result.success && result.coverage) return result.coverage;
       return result;
     }
-    case "accumulative": {
-      const result = await getCoverageMapForAccumulative({
+    case "compare": {
+      const result = await getCoverageMapForCompare({
         provider: q.provider,
         repoID: q.repoID,
-        accumulativeID: q.subjectID,
+        compareID: q.subjectID,
         buildTarget: q.buildTarget ?? "",
         filePath: q.filePath,
         scene: q.scene,
@@ -163,7 +163,7 @@ coverageApi.openapi(coverageSummaryMapRoute, async (c) => {
   }
   const coverage = map as Record<string, unknown>;
   const diffAdditions =
-    q.subject === "pull" || q.subject === "merge_requests" || q.subject === "accumulative"
+    q.subject === "pull" || q.subject === "merge_requests" || q.subject === "compare"
       ? Object.values(coverage)
           .map((m: unknown) => {
             const o = m as { path?: string; diff?: { additions?: number[] } };

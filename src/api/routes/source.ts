@@ -18,10 +18,10 @@ const SourceQuerySchema = z.object({
     .string()
     .optional()
     .openapi({ param: { name: "sha", in: "query" } }),
-  accumulativeID: z
+  compareID: z
     .string()
     .optional()
-    .openapi({ param: { name: "accumulativeID", in: "query" } }),
+    .openapi({ param: { name: "compareID", in: "query" } }),
   subject: z
     .string()
     .optional()
@@ -37,7 +37,7 @@ const sourceRoute = createRoute({
   path: "/",
   summary: "获取文件内容",
   description:
-    "从 GitLab/GitHub 获取指定仓库、路径、ref 下的文件内容。支持 ref/sha、accumulativeID、subject=pull+subjectID 解析。返回 Base64 编码的 content。",
+    "从 GitLab/GitHub 获取指定仓库、路径、ref 下的文件内容。支持 ref/sha、compareID、subject=pull+subjectID 解析。返回 Base64 编码的 content。",
   tags: ["源码"],
   request: { query: SourceQuerySchema },
   responses: {
@@ -179,7 +179,7 @@ sourceApi.openapi(sourceRoute, async (c) => {
   if (!repo_id || !path) {
     return c.json({ content: null });
   }
-  if (!q.ref && !q.sha && !q.accumulativeID && !(q.subject === "pull" && q.subjectID)) {
+  if (!q.ref && !q.sha && !q.compareID && !(q.subject === "pull" && q.subjectID)) {
     return c.json({ content: null });
   }
 
@@ -189,7 +189,7 @@ sourceApi.openapi(sourceRoute, async (c) => {
     provider,
     ref: q.ref,
     sha: q.sha,
-    accumulativeID: q.accumulativeID,
+    compareID: q.compareID,
     subject: q.subject,
     subjectID: q.subjectID,
   });

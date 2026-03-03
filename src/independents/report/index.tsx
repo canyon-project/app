@@ -13,7 +13,7 @@ import { getRepo } from "@/services/repo";
 
 type FileDataResponse = Awaited<ReturnType<CanyonReportProps["onSelect"]>>;
 
-type SubjectType = "commit" | "accumulative" | "pull" | undefined;
+type SubjectType = "commit" | "compare" | "pull" | undefined;
 
 interface RouteParams {
   provider: string;
@@ -137,7 +137,7 @@ const ReportIndependent = () => {
         return subjectID;
       }
 
-      if (subject === "accumulative") {
+      if (subject === "compare") {
         // 格式为 baseSha...headSha，使用 head (第二个) 作为 ref
         const parts = subjectID.split("...");
         if (parts.length === 2) {

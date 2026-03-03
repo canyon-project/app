@@ -236,7 +236,7 @@ const Projects = () => {
           <>
             <Link
               to={{
-                pathname: `/${provider}/${org}/${repo}/accumulative`,
+                pathname: `/${provider}/${org}/${repo}/compare`,
               }}
             >
               {t("common.detail")}

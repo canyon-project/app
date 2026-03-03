@@ -47,7 +47,7 @@ type CommitInfo = {
   createdAt: string;
 };
 
-type AccumulativeRecord = {
+type CompareRecord = {
   id: string;
   provider: string;
   repoID: string;
@@ -61,7 +61,7 @@ type AccumulativeRecord = {
   headCommit: CommitInfo | null;
 };
 
-const AccumulativePage = () => {
+const ComparePage = () => {
   const { t } = useTranslation();
   const { repo } = useOutletContext<{
     repo: Repo | null;
@@ -69,12 +69,12 @@ const AccumulativePage = () => {
   const params = useParams();
   const [loading, setLoading] = useState(false);
   const [addLoading, setAddLoading] = useState(false);
-  const [accumulativeRecords, setAccumulativeRecords] = useState<AccumulativeRecord[]>([]);
+  const [compareRecords, setCompareRecords] = useState<CompareRecord[]>([]);
   const [total, setTotal] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [form] = Form.useForm();
 
-  const fetchAccumulativeRecords = async () => {
+  const fetchCompareRecords = async () => {
     if (!repo?.id || !params.provider) {
       return;
     }
@@ -82,7 +82,7 @@ const AccumulativePage = () => {
     setLoading(true);
     try {
       const data = await getDiffList({ repoID: repo.id, provider: params.provider });
-      setAccumulativeRecords(data.data || []);
+      setCompareRecords(data.data || []);
       setTotal(data.total ?? 0);
     } catch (error) {
       message.error(t("projects.comparison.fetch.failed"));
@@ -93,7 +93,7 @@ const AccumulativePage = () => {
   };
 
   useEffect(() => {
-    fetchAccumulativeRecords();
+    fetchCompareRecords();
   }, [repo?.id, params.provider]);
 
   const handleAdd = async (values: { base: string; head: string }) => {
@@ -102,7 +102,7 @@ const AccumulativePage = () => {
     }
 
     const subjectID = `${values.base}...${values.head}`;
-    const subject = "accumulative";
+    const subject = "compare";
 
     setAddLoading(true);
     try {
@@ -115,7 +115,7 @@ const AccumulativePage = () => {
       message.success(t("projects.comparison.create.success"));
       setIsModalOpen(false);
       form.resetFields();
-      fetchAccumulativeRecords();
+      fetchCompareRecords();
     } catch (error) {
       message.error(t("projects.comparison.create.failed"));
       console.error(error);
@@ -124,7 +124,7 @@ const AccumulativePage = () => {
     }
   };
 
-  const handleDelete = async (record: AccumulativeRecord) => {
+  const handleDelete = async (record: CompareRecord) => {
     if (!repo?.id || !params.provider) {
       return;
     }
@@ -137,7 +137,7 @@ const AccumulativePage = () => {
         subject: record.subject,
       });
       message.success(t("projects.comparison.delete.success"));
-      fetchAccumulativeRecords();
+      fetchCompareRecords();
     } catch (error) {
       message.error(t("projects.comparison.delete.failed"));
       console.error(error);
@@ -166,13 +166,13 @@ const AccumulativePage = () => {
     }
   };
 
-  const columns: ColumnsType<AccumulativeRecord> = [
+  const columns: ColumnsType<CompareRecord> = [
     {
       title: t("projects.comparison.columns.base"),
       dataIndex: "base",
       key: "base",
       width: 250,
-      render: (text: string, record: AccumulativeRecord) => {
+      render: (text: string, record: CompareRecord) => {
         const commitInfo = record.baseCommit;
         const shortSha = text ? text.substring(0, 7) : "-";
         const commitMessage = commitInfo?.commitMessage
@@ -209,7 +209,7 @@ const AccumulativePage = () => {
       dataIndex: "head",
       key: "head",
       width: 250,
-      render: (text: string, record: AccumulativeRecord) => {
+      render: (text: string, record: CompareRecord) => {
         const commitInfo = record.headCommit;
         const shortSha = text ? text.substring(0, 7) : "-";
         const commitMessage = commitInfo?.commitMessage
@@ -245,7 +245,7 @@ const AccumulativePage = () => {
       title: t("projects.comparison.columns.fileCount"),
       key: "fileCount",
       width: 100,
-      render: (_: any, record: AccumulativeRecord) => (
+      render: (_: unknown, record: CompareRecord) => (
         <Text strong>{record.files?.length || 0}</Text>
       ),
     },
@@ -253,19 +253,16 @@ const AccumulativePage = () => {
       title: t("projects.comparison.columns.action"),
       key: "action",
       width: 200,
-      render: (_: any, record: AccumulativeRecord) => {
+      render: (_: unknown, record: CompareRecord) => {
         const buildTargets = record.buildTargets || [];
-
-        // 构建菜单项：如果没有 buildTarget，添加一个"默认"选项
         const menuItems: MenuProps["items"] = [];
 
         if (buildTargets.length === 0) {
-          // 如果没有 buildTarget，添加一个"默认"选项
           menuItems.push({
             key: "__default__",
             label: (
               <a
-                href={`/report/-/${params.provider}/${params.org}/${params.repo}/accumulative/${record.subjectID}/-`}
+                href={`/report/-/${params.provider}/${params.org}/${params.repo}/compare/${record.subjectID}/-`}
                 target="_blank"
                 rel="noreferrer"
               >
@@ -274,13 +271,12 @@ const AccumulativePage = () => {
             ),
           });
         } else {
-          // 添加所有 buildTarget 选项
           buildTargets.forEach((buildTarget) => {
             menuItems.push({
               key: buildTarget || "__empty__",
               label: (
                 <a
-                  href={`/report/-/${params.provider}/${params.org}/${params.repo}/accumulative/${record.subjectID}/-?build_target=${encodeURIComponent(buildTarget)}`}
+                  href={`/report/-/${params.provider}/${params.org}/${params.repo}/compare/${record.subjectID}/-?build_target=${encodeURIComponent(buildTarget)}`}
                   target="_blank"
                   rel="noreferrer"
                 >
@@ -291,7 +287,6 @@ const AccumulativePage = () => {
           });
         }
 
-        // 统一使用下拉菜单显示
         return (
           <Space>
             <Dropdown menu={{ items: menuItems }} placement="bottomLeft">
@@ -334,9 +329,9 @@ const AccumulativePage = () => {
       </div>
 
       <CardPrimary>
-        <Table<AccumulativeRecord>
+        <Table<CompareRecord>
           columns={columns}
-          dataSource={accumulativeRecords}
+          dataSource={compareRecords}
           loading={loading}
           rowKey="id"
           pagination={{
@@ -409,4 +404,4 @@ const AccumulativePage = () => {
   );
 };
 
-export default AccumulativePage;
+export default ComparePage;

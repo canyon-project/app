@@ -6,10 +6,10 @@ import { addMaps, ensureNumMap, type NumMap } from "@/api/lib/collect/coverage-m
 import { testExclude } from "@/api/lib/coverage/test-exclude.ts";
 import { remapCoverageByOld } from "canyon-map";
 
-export interface CoverageMapForAccumulativeParams {
+export interface CoverageMapForCompareParams {
   provider: string;
   repoID: string;
-  accumulativeID: string;
+  compareID: string;
   buildTarget?: string;
   filePath?: string;
   scene?: string;
@@ -34,11 +34,11 @@ function buildSceneQueryCondition(scene?: string) {
 }
 
 /**
- * 按 accumulative（commit1...commit2）查询累积覆盖率 map
+ * 按 compare（commit1...commit2）查询对比覆盖率 map
  * 合并 from..to 之间所有 commit 的 hit 数据到 headSha 的 map 上
  */
-export async function getCoverageMapForAccumulative(
-  params: CoverageMapForAccumulativeParams,
+export async function getCoverageMapForCompare(
+  params: CoverageMapForCompareParams,
 ): Promise<
   | {
       success: true;
@@ -48,11 +48,11 @@ export async function getCoverageMapForAccumulative(
     }
   | { success: false; message: string }
 > {
-  const { provider, repoID, accumulativeID, buildTarget = "", filePath, scene } = params;
+  const { provider, repoID, compareID, buildTarget = "", filePath, scene } = params;
 
-  const [baseSha, headSha] = accumulativeID.split("...");
+  const [baseSha, headSha] = compareID.split("...");
   if (!baseSha || !headSha) {
-    return { success: false, message: "accumulativeID 格式错误，应为 baseSha...headSha" };
+    return { success: false, message: "compareID 格式错误，应为 baseSha...headSha" };
   }
 
   const diffWhere: { from: string; to: string; provider: string; repoID: string; path?: string } = {
@@ -369,7 +369,7 @@ export async function getCoverageMapForAccumulative(
         const fnHashToNowId = new Map<string, string>();
         for (const [nowId, fn] of Object.entries(nowFn)) {
           if (fn?.contentHash) {
-            for (const [otherId, otherFnEntry] of Object.entries(otherFn)) {
+            for (const [_otherId, otherFnEntry] of Object.entries(otherFn)) {
               if ((otherFnEntry as { contentHash?: string })?.contentHash === fn.contentHash) {
                 fnHashToNowId.set(fn.contentHash, nowId);
                 break;

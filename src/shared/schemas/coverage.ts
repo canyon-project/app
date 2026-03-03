@@ -32,7 +32,7 @@ export const CoverageMapInitSchema = z
 export const CoverageMapQuerySchema = z
   .object({
     subject: z
-      .enum(["commit", "pull", "merge_requests", "accumulative"])
+      .enum(["commit", "pull", "merge_requests", "compare"])
       .openapi({ param: { name: "subject", in: "query" } }),
     subjectID: z.string().openapi({ param: { name: "subjectID", in: "query" } }),
     provider: z.enum(["gitlab", "github"]).openapi({ param: { name: "provider", in: "query" } }),
