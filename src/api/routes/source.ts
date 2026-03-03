@@ -116,6 +116,43 @@ const diffPostRoute = createRoute({
   responses: { 200: { description: "创建成功" }, 400: { description: "参数错误" } },
 });
 
+const commitPostRoute = createRoute({
+  method: "post",
+  path: "/commit",
+  summary: "创建 Commit",
+  description:
+    "通过 provider、repoID、sha 创建 commit 记录。若已存在则跳过；否则从 SCM（GitLab/GitHub）拉取 commit 实体并存储。id 格式：provider-repoID-sha。",
+  tags: ["源码"],
+  request: {
+    body: {
+      content: {
+        "application/json": {
+          schema: z.object({
+            provider: z.enum(["gitlab", "github"]).describe("SCM 提供商"),
+            repoID: z.string().describe("仓库 ID，如 GitLab project id 或 org/repo"),
+            sha: z.string().describe("Commit SHA"),
+          }),
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      content: {
+        "application/json": {
+          schema: z.object({
+            success: z.boolean(),
+            id: z.string().optional().describe("Commit 记录 id，格式 provider-repoID-sha"),
+          }),
+        },
+      },
+      description: "成功",
+    },
+    400: { description: "参数错误" },
+    502: { description: "SCM 未配置或请求失败" },
+  },
+});
+
 const diffDeleteRoute = createRoute({
   method: "delete",
   path: "/diff",
@@ -310,6 +347,29 @@ sourceApi.openapi(diffGetRoute, async (c) => {
   });
 
   return c.json({ data, total: data.length });
+});
+
+sourceApi.openapi(commitPostRoute, async (c) => {
+  const body = c.req.valid("json");
+  const { provider, repoID, sha } = body;
+
+  if (!provider || !repoID || !sha) {
+    return c.json({ success: false, error: "缺少必要参数：provider、repoID、sha" }, 400);
+  }
+
+  const scm = getScm(provider);
+  if (!scm) {
+    return c.json({ success: false, error: "SCM 未配置" }, 502);
+  }
+
+  try {
+    await ensureCommitFromScm(prisma, scm, provider, repoID, sha);
+    const id = toCommitId(provider, repoID, sha);
+    return c.json({ success: true, id });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return c.json({ success: false, error: "SCM 请求失败", detail: msg }, 502);
+  }
 });
 
 sourceApi.openapi(diffPostRoute, async (c) => {
