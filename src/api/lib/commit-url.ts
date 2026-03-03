@@ -30,3 +30,26 @@ export function buildCommitUrl(
 
   return null;
 }
+
+/**
+ * 根据 provider、pathWithNamespace 构建 SCM 的仓库页面 URL
+ */
+export function buildRepoUrl(provider: string, pathWithNamespace: string): string | null {
+  if (!pathWithNamespace) return null;
+
+  const p = provider?.toLowerCase() ?? "";
+  const path = pathWithNamespace.trim();
+  if (!path) return null;
+
+  if (p === "gitlab") {
+    const base = getInfra(InfraKey.GITLAB_BASE_URL)?.replace(/\/$/, "") || "";
+    if (!base) return null;
+    return `${base}/${path}`;
+  }
+
+  if (p === "github") {
+    return `${GITHUB_BASE}/${path}`;
+  }
+
+  return null;
+}

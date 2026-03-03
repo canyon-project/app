@@ -13,6 +13,7 @@ export const RepoSchema = z
     updatedAt: z.string().datetime(),
     reportTimes: z.number().optional(),
     lastReportTime: z.string().datetime().nullable().optional(),
+    repoUrl: z.string().url().nullable().optional(),
   })
   .openapi("Repo");
 

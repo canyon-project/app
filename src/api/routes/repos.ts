@@ -3,6 +3,7 @@ import { OpenAPIHono } from "@hono/zod-openapi";
 import { prisma } from "@/api/lib/prisma.ts";
 import { createScmAdapter } from "@/api/scm/index.ts";
 import { getInfra, InfraKey } from "@/api/lib/infra.ts";
+import { buildRepoUrl } from "@/api/lib/commit-url.ts";
 import { RepoSchema, CreateRepoSchema, UpdateRepoSchema } from "@/shared/schemas/repo.ts";
 
 const IdParamSchema = z.object({
@@ -268,10 +269,11 @@ reposApi.openapi(listRoute, async (c) => {
   const reposWithStats = rows.map((r) => {
     const repoID = r.id.split("-")[1] ?? r.id;
     const stats = statsMap.get(repoID);
-    return toResponse(r, {
+    const resp = toResponse(r, {
       reportTimes: stats?.count ?? 0,
       lastReportTime: stats?.lastReportTime ?? null,
     });
+    return { ...resp, repoUrl: buildRepoUrl(r.provider, r.pathWithNamespace) };
   });
 
   reposWithStats.sort((a, b) => {

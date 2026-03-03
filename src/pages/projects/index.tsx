@@ -29,6 +29,7 @@ type Repo = {
   maxCoverage?: number;
   lastReportTime?: string;
   provider: string;
+  repoUrl?: string | null;
 };
 
 type ProjectRow = {
@@ -47,6 +48,7 @@ type ProjectRow = {
   reportTimes?: number;
   lastReportTime?: string;
   provider: string;
+  repoUrl?: string | null;
 };
 
 const Projects = () => {
@@ -137,7 +139,6 @@ const Projects = () => {
       dataIndex: "pathWithNamespace",
       key: "pathWithNamespace",
       render: (text, record) => {
-        // 根据 provider 选择对应的 logo
         const logoPath =
           record.provider === "github" ? "/gitproviders/github.svg" : "/gitproviders/gitlab.svg";
 
@@ -147,14 +148,19 @@ const Projects = () => {
 
             <span style={{ width: "4px", display: "inline-block" }}></span>
             <div className={"flex gap-1 flex-col"}>
-              <a
-                className={"max-w-[240px]"}
-                style={{ color: "unset" }}
-                target={"_blank"}
-                rel="noreferrer"
-              >
-                {text}
-              </a>
+              {record.repoUrl ? (
+                <a
+                  href={record.repoUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className={"max-w-[240px]"}
+                  style={{ color: "unset" }}
+                >
+                  {text}
+                </a>
+              ) : (
+                <span className={"max-w-[240px]"}>{text}</span>
+              )}
               <Text type={"secondary"} style={{ fontSize: "12px", width: "240px" }}>
                 {record.description}
               </Text>
@@ -278,6 +284,7 @@ const Projects = () => {
     reportTimes: r.reportTimes,
     lastReportTime: r.lastReportTime,
     provider: r.provider,
+    repoUrl: r.repoUrl,
   }));
 
   return (
