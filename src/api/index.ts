@@ -46,6 +46,18 @@ api.get("/ui", swaggerUI({ url: "/api/doc" }));
 
 api.get("/health", (c) => c.text("OK"));
 
+/** 用于测试服务端请求体大小限制：POST 任意内容，返回接收到的字节数 */
+api.post("/debug/body-size", async (c) => {
+  const body = await c.req.arrayBuffer();
+  const sizeBytes = body.byteLength;
+  return c.json({
+    sizeBytes,
+    sizeKB: Number((sizeBytes / 1024).toFixed(2)),
+    sizeMB: Number((sizeBytes / 1024 / 1024).toFixed(2)),
+    contentLengthHeader: c.req.header("Content-Length") ?? null,
+  });
+});
+
 app.get("/vi/health", (c) => c.text("OK"));
 
 app.use("/api/*", cors());
