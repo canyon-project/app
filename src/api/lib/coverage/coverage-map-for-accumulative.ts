@@ -35,7 +35,7 @@ function buildSceneQueryCondition(scene?: string) {
 
 /**
  * 按 accumulative（commit1...commit2）查询累积覆盖率 map
- * 合并 from..to 之间所有 commit 的 hit 数据到 nowSha 的 map 上
+ * 合并 from..to 之间所有 commit 的 hit 数据到 headSha 的 map 上
  */
 export async function getCoverageMapForAccumulative(
   params: CoverageMapForAccumulativeParams,
@@ -50,14 +50,14 @@ export async function getCoverageMapForAccumulative(
 > {
   const { provider, repoID, accumulativeID, buildTarget = "", filePath, scene } = params;
 
-  const [afterSha, nowSha] = accumulativeID.split("...");
-  if (!afterSha || !nowSha) {
-    return { success: false, message: "accumulativeID 格式错误，应为 afterSha...nowSha" };
+  const [baseSha, headSha] = accumulativeID.split("...");
+  if (!baseSha || !headSha) {
+    return { success: false, message: "accumulativeID 格式错误，应为 baseSha...headSha" };
   }
 
   const diffWhere: { from: string; to: string; provider: string; repoID: string; path?: string } = {
-    from: afterSha,
-    to: nowSha,
+    from: baseSha,
+    to: headSha,
     provider,
     repoID,
   };
@@ -79,69 +79,69 @@ export async function getCoverageMapForAccumulative(
   }
   if (!scm) return { success: false, message: "SCM 配置缺失" };
 
-  const filteredCommits = await scm.getCommitsBetween(repoID, afterSha, nowSha);
-  const nowShaIndex = filteredCommits.indexOf(nowSha);
-  if (nowShaIndex === -1)
-    return { success: false, message: "nowSha not found in filtered commits" };
+  const filteredCommits = await scm.getCommitsBetween(repoID, baseSha, headSha);
+  const headShaIndex = filteredCommits.indexOf(headSha);
+  if (headShaIndex === -1)
+    return { success: false, message: "headSha not found in filtered commits" };
 
-  const nowShaCoverageWhere: Record<string, unknown> = {
+  const headShaCoverageWhere: Record<string, unknown> = {
     provider,
     repoID,
-    sha: nowSha,
+    sha: headSha,
     buildTarget,
   };
   const sceneCondition = buildSceneQueryCondition(scene);
-  if (sceneCondition) nowShaCoverageWhere.scene = sceneCondition;
+  if (sceneCondition) headShaCoverageWhere.scene = sceneCondition;
 
-  const nowShaCoverageRecords = await prisma.coverage.findMany({
-    where: nowShaCoverageWhere as never,
+  const headShaCoverageRecords = await prisma.coverage.findMany({
+    where: headShaCoverageWhere as never,
   });
-  if (nowShaCoverageRecords.length === 0) {
-    return { success: false, message: "No coverage records found for nowSha" };
+  if (headShaCoverageRecords.length === 0) {
+    return { success: false, message: "No coverage records found for headSha" };
   }
 
-  const nowShaCoverageRecord = nowShaCoverageRecords[0];
-  const { instrumentCwd: nowShaInstrumentCwd, buildHash: nowShaBuildHash } = nowShaCoverageRecord;
-  const nowShaInstrumentCwdPrefix = nowShaInstrumentCwd + "/";
+  const headShaCoverageRecord = headShaCoverageRecords[0];
+  const { instrumentCwd: headShaInstrumentCwd, buildHash: headShaBuildHash } = headShaCoverageRecord;
+  const headShaInstrumentCwdPrefix = headShaInstrumentCwd + "/";
 
-  const nowShaMapRelations = await prisma.coverageMapRelation.findMany({
+  const headShaMapRelations = await prisma.coverageMapRelation.findMany({
     where: {
-      buildHash: nowShaBuildHash,
-      fullFilePath: { in: diffList.map((d) => nowShaInstrumentCwdPrefix + d.path) },
+      buildHash: headShaBuildHash,
+      fullFilePath: { in: diffList.map((d) => headShaInstrumentCwdPrefix + d.path) },
     },
   });
 
-  const nowShaCoverageMapHashKeySet = new Set<string>();
-  const nowShaSourceMapHashSet = new Set<string>();
-  for (const r of nowShaMapRelations) {
-    nowShaCoverageMapHashKeySet.add(`${r.coverageMapHash}|${r.fileContentHash}`);
-    if (r.sourceMapHash) nowShaSourceMapHashSet.add(r.sourceMapHash);
+  const headShaCoverageMapHashKeySet = new Set<string>();
+  const headShaSourceMapHashSet = new Set<string>();
+  for (const r of headShaMapRelations) {
+    headShaCoverageMapHashKeySet.add(`${r.coverageMapHash}|${r.fileContentHash}`);
+    if (r.sourceMapHash) headShaSourceMapHashSet.add(r.sourceMapHash);
   }
 
-  const [nowShaCoverageMaps, nowShaSourceMaps] = await Promise.all([
+  const [headShaCoverageMaps, headShaSourceMaps] = await Promise.all([
     prisma.coverageMap.findMany({
-      where: { hash: { in: Array.from(nowShaCoverageMapHashKeySet) } },
+      where: { hash: { in: Array.from(headShaCoverageMapHashKeySet) } },
     }),
     prisma.coverageSourceMap.findMany({
-      where: { hash: { in: Array.from(nowShaSourceMapHashSet) } },
+      where: { hash: { in: Array.from(headShaSourceMapHashSet) } },
     }),
   ]);
 
-  const nowShaCoverageMapIndex = new Map(nowShaCoverageMaps.map((m) => [m.hash, m]));
-  const nowShaSourceMapIndex = new Map(nowShaSourceMaps.map((s) => [s.hash, s]));
+  const headShaCoverageMapIndex = new Map(headShaCoverageMaps.map((m) => [m.hash, m]));
+  const headShaSourceMapIndex = new Map(headShaSourceMaps.map((s) => [s.hash, s]));
 
-  const nowShaFileCoverageMap = new Map<string, Record<string, unknown>>();
-  for (const r of nowShaMapRelations) {
+  const headShaFileCoverageMap = new Map<string, Record<string, unknown>>();
+  for (const r of headShaMapRelations) {
     const rawFilePath = r.restoreFullFilePath || r.fullFilePath;
-    const normalizedPath = rawFilePath.startsWith(nowShaInstrumentCwdPrefix)
-      ? rawFilePath.slice(nowShaInstrumentCwdPrefix.length)
+    const normalizedPath = rawFilePath.startsWith(headShaInstrumentCwdPrefix)
+      ? rawFilePath.slice(headShaInstrumentCwdPrefix.length)
       : rawFilePath;
-    const sm = nowShaSourceMapIndex.get(r.sourceMapHash);
-    const cm = nowShaCoverageMapIndex.get(`${r.coverageMapHash}|${r.fileContentHash}`);
+    const sm = headShaSourceMapIndex.get(r.sourceMapHash);
+    const cm = headShaCoverageMapIndex.get(`${r.coverageMapHash}|${r.fileContentHash}`);
     if (!cm) continue;
     const decoded = decodeCompressedObject(cm.map);
     if (!decoded || typeof decoded !== "object") continue;
-    nowShaFileCoverageMap.set(normalizedPath, {
+    headShaFileCoverageMap.set(normalizedPath, {
       path: rawFilePath,
       fileContentHash: r.fileContentHash,
       ...(decoded as Record<string, unknown>),
@@ -149,21 +149,21 @@ export async function getCoverageMapForAccumulative(
     });
   }
 
-  const nowShaSceneKeys = new Set(nowShaCoverageRecords.map((r) => r.sceneKey));
-  const nowShaCoverageHits = await prisma.coverageHit.findMany({
+  const headShaSceneKeys = new Set(headShaCoverageRecords.map((r) => r.sceneKey));
+  const headShaCoverageHits = await prisma.coverageHit.findMany({
     where: {
-      buildHash: nowShaBuildHash,
-      ...(nowShaSceneKeys.size > 0 && { sceneKey: { in: Array.from(nowShaSceneKeys) } }),
+      buildHash: headShaBuildHash,
+      ...(headShaSceneKeys.size > 0 && { sceneKey: { in: Array.from(headShaSceneKeys) } }),
     },
   });
 
-  const nowShaHitDataByFile = new Map<string, { s: NumMap; f: NumMap }>();
-  for (const h of nowShaCoverageHits) {
-    const np = h.rawFilePath.startsWith(nowShaInstrumentCwdPrefix)
-      ? h.rawFilePath.slice(nowShaInstrumentCwdPrefix.length)
+  const headShaHitDataByFile = new Map<string, { s: NumMap; f: NumMap }>();
+  for (const h of headShaCoverageHits) {
+    const np = h.rawFilePath.startsWith(headShaInstrumentCwdPrefix)
+      ? h.rawFilePath.slice(headShaInstrumentCwdPrefix.length)
       : h.rawFilePath;
-    if (!nowShaHitDataByFile.has(np)) nowShaHitDataByFile.set(np, { s: {}, f: {} });
-    const fd = nowShaHitDataByFile.get(np)!;
+    if (!headShaHitDataByFile.has(np)) headShaHitDataByFile.set(np, { s: {}, f: {} });
+    const fd = headShaHitDataByFile.get(np)!;
     fd.s = addMaps(fd.s, ensureNumMap(h.s as Record<string, unknown>));
     fd.f = addMaps(fd.f, ensureNumMap(h.f as Record<string, unknown>));
   }
@@ -176,7 +176,7 @@ export async function getCoverageMapForAccumulative(
   const comparisonResults: unknown[] = [];
 
   for (const sha of filteredCommits) {
-    if (sha === nowSha) continue;
+    if (sha === headSha) continue;
 
     const covWhere: Record<string, unknown> = { provider, repoID, sha, buildTarget };
     if (sceneCondition) covWhere.scene = sceneCondition;
@@ -247,18 +247,18 @@ export async function getCoverageMapForAccumulative(
     commitDataMap.set(sha, { hitDataByFile, fileCoverageMap });
 
     const fileComparisons: unknown[] = [];
-    for (const [fp, nowShaFile] of nowShaFileCoverageMap.entries()) {
+    for (const [fp, headShaFile] of headShaFileCoverageMap.entries()) {
       const other = fileCoverageMap.get(fp);
       if (!other) {
         fileComparisons.push({ filePath: fp, status: "missing" });
         continue;
       }
-      const hashEqual = nowShaFile.fileContentHash === other.fileContentHash;
+      const hashEqual = headShaFile.fileContentHash === other.fileContentHash;
       if (hashEqual) {
         fileComparisons.push({ filePath: fp, status: "fileContentHashEqual", canMerge: true });
         continue;
       }
-      const nowStmt = (nowShaFile.statementMap as Record<string, { contentHash?: string }>) || {};
+      const nowStmt = (headShaFile.statementMap as Record<string, { contentHash?: string }>) || {};
       const otherStmt = (other.statementMap as Record<string, { contentHash?: string }>) || {};
       const nowHashToIds = new Map<string, string[]>();
       const otherHashToIds = new Map<string, string[]>();
@@ -276,7 +276,7 @@ export async function getCoverageMapForAccumulative(
       }
       const mergeable: Array<{
         contentHash: string;
-        nowShaStatementId: string;
+        headShaStatementId: string;
         otherStatementId: string;
       }> = [];
       for (const [ch, nowIds] of nowHashToIds.entries()) {
@@ -284,7 +284,7 @@ export async function getCoverageMapForAccumulative(
         if (nowIds.length === 1 && otherIds.length === 1) {
           mergeable.push({
             contentHash: ch,
-            nowShaStatementId: nowIds[0],
+            headShaStatementId: nowIds[0],
             otherStatementId: otherIds[0],
           });
         }
@@ -300,11 +300,11 @@ export async function getCoverageMapForAccumulative(
   }
 
   const mergedCoverageData: Record<string, Record<string, unknown>> = {};
-  for (const [fp, nowShaFile] of nowShaFileCoverageMap.entries()) {
-    const hitData = nowShaHitDataByFile.get(fp);
+  for (const [fp, headShaFile] of headShaFileCoverageMap.entries()) {
+    const hitData = headShaHitDataByFile.get(fp);
     if (!hitData) continue;
     mergedCoverageData[fp] = {
-      ...nowShaFile,
+      ...headShaFile,
       s: { ...hitData.s },
       f: { ...hitData.f },
       b: {},
@@ -314,7 +314,7 @@ export async function getCoverageMapForAccumulative(
 
   for (let i = 0; i < filteredCommits.length; i++) {
     const sha = filteredCommits[i];
-    if (sha === nowSha) continue;
+    if (sha === headSha) continue;
     const comp = comparisonResults.find((r: { commitSha?: string }) => r.commitSha === sha);
     const commitData = commitDataMap.get(sha);
     if (!comp || !commitData) continue;
@@ -333,7 +333,7 @@ export async function getCoverageMapForAccumulative(
         fc as {
           mergeableStatements?: Array<{
             contentHash: string;
-            nowShaStatementId: string;
+            headShaStatementId: string;
             otherStatementId: string;
           }>;
         }
@@ -351,7 +351,7 @@ export async function getCoverageMapForAccumulative(
         for (const [id, st] of Object.entries(otherStmt)) {
           if (st?.contentHash) otherIdToHash.set(id, st.contentHash);
         }
-        const hashToNowId = new Map(mergeable.map((m) => [m.contentHash, m.nowShaStatementId]));
+        const hashToNowId = new Map(mergeable.map((m) => [m.contentHash, m.headShaStatementId]));
         for (const [otherId, count] of Object.entries(commitHit.s)) {
           const ch = otherIdToHash.get(otherId);
           const nowId = ch ? hashToNowId.get(ch) : undefined;
@@ -396,8 +396,8 @@ export async function getCoverageMapForAccumulative(
   for (const [fp, fc] of Object.entries(
     remapped as Record<string, Record<string, unknown> & { path?: string }>,
   )) {
-    const np = fp.startsWith(nowShaInstrumentCwdPrefix)
-      ? fp.slice(nowShaInstrumentCwdPrefix.length)
+    const np = fp.startsWith(headShaInstrumentCwdPrefix)
+      ? fp.slice(headShaInstrumentCwdPrefix.length)
       : fp;
     normalizedCoverage[np] = {
       ...fc,
@@ -411,5 +411,5 @@ export async function getCoverageMapForAccumulative(
     JSON.stringify({ exclude: ["dist/**"] }),
   ) as Record<string, unknown>;
 
-  return { success: true, baseCommit: nowSha, comparisonResults, coverage: finalCoverage };
+  return { success: true, baseCommit: headSha, comparisonResults, coverage: finalCoverage };
 }

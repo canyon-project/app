@@ -51,14 +51,14 @@ type AccumulativeRecord = {
   id: string;
   provider: string;
   repoID: string;
-  after: string;
-  now: string;
+  base: string;
+  head: string;
   subject: string;
   subjectID: string;
   files: DiffFile[];
   buildTargets: string[];
-  fromCommit: CommitInfo | null;
-  toCommit: CommitInfo | null;
+  baseCommit: CommitInfo | null;
+  headCommit: CommitInfo | null;
 };
 
 const AccumulativePage = () => {
@@ -85,7 +85,7 @@ const AccumulativePage = () => {
       setAccumulativeRecords(data.data || []);
       setTotal(data.total ?? 0);
     } catch (error) {
-      message.error(t("projects.accumulative.fetch.failed"));
+      message.error(t("projects.comparison.fetch.failed"));
       console.error(error);
     } finally {
       setLoading(false);
@@ -96,12 +96,12 @@ const AccumulativePage = () => {
     fetchAccumulativeRecords();
   }, [repo?.id, params.provider]);
 
-  const handleAdd = async (values: { after: string; now: string }) => {
+  const handleAdd = async (values: { base: string; head: string }) => {
     if (!repo?.id || !params.provider) {
       return;
     }
 
-    const subjectID = `${values.after}...${values.now}`;
+    const subjectID = `${values.base}...${values.head}`;
     const subject = "accumulative";
 
     setAddLoading(true);
@@ -112,12 +112,12 @@ const AccumulativePage = () => {
         subject,
         subjectID,
       });
-      message.success(t("projects.accumulative.create.success"));
+      message.success(t("projects.comparison.create.success"));
       setIsModalOpen(false);
       form.resetFields();
       fetchAccumulativeRecords();
     } catch (error) {
-      message.error(t("projects.accumulative.create.failed"));
+      message.error(t("projects.comparison.create.failed"));
       console.error(error);
     } finally {
       setAddLoading(false);
@@ -136,10 +136,10 @@ const AccumulativePage = () => {
         subjectID: record.subjectID,
         subject: record.subject,
       });
-      message.success(t("projects.accumulative.delete.success"));
+      message.success(t("projects.comparison.delete.success"));
       fetchAccumulativeRecords();
     } catch (error) {
-      message.error(t("projects.accumulative.delete.failed"));
+      message.error(t("projects.comparison.delete.failed"));
       console.error(error);
     }
   };
@@ -168,12 +168,12 @@ const AccumulativePage = () => {
 
   const columns: ColumnsType<AccumulativeRecord> = [
     {
-      title: t("projects.accumulative.columns.after"),
-      dataIndex: "after",
-      key: "after",
+      title: t("projects.comparison.columns.base"),
+      dataIndex: "base",
+      key: "base",
       width: 250,
       render: (text: string, record: AccumulativeRecord) => {
-        const commitInfo = record.fromCommit;
+        const commitInfo = record.baseCommit;
         const shortSha = text ? text.substring(0, 7) : "-";
         const commitMessage = commitInfo?.commitMessage
           ? commitInfo.commitMessage.split("\n")[0].substring(0, 60)
@@ -205,12 +205,12 @@ const AccumulativePage = () => {
       },
     },
     {
-      title: t("projects.accumulative.columns.now"),
-      dataIndex: "now",
-      key: "now",
+      title: t("projects.comparison.columns.head"),
+      dataIndex: "head",
+      key: "head",
       width: 250,
       render: (text: string, record: AccumulativeRecord) => {
-        const commitInfo = record.toCommit;
+        const commitInfo = record.headCommit;
         const shortSha = text ? text.substring(0, 7) : "-";
         const commitMessage = commitInfo?.commitMessage
           ? commitInfo.commitMessage.split("\n")[0].substring(0, 60)
@@ -242,7 +242,7 @@ const AccumulativePage = () => {
       },
     },
     {
-      title: t("projects.accumulative.columns.fileCount"),
+      title: t("projects.comparison.columns.fileCount"),
       key: "fileCount",
       width: 100,
       render: (_: any, record: AccumulativeRecord) => (
@@ -250,7 +250,7 @@ const AccumulativePage = () => {
       ),
     },
     {
-      title: t("projects.accumulative.columns.action"),
+      title: t("projects.comparison.columns.action"),
       key: "action",
       width: 200,
       render: (_: any, record: AccumulativeRecord) => {
@@ -269,7 +269,7 @@ const AccumulativePage = () => {
                 target="_blank"
                 rel="noreferrer"
               >
-                {t("projects.accumulative.default.buildTarget")}
+                {t("projects.comparison.default.buildTarget")}
               </a>
             ),
           });
@@ -284,7 +284,7 @@ const AccumulativePage = () => {
                   target="_blank"
                   rel="noreferrer"
                 >
-                  {buildTarget || t("projects.accumulative.empty.buildTarget")}
+                  {buildTarget || t("projects.comparison.empty.buildTarget")}
                 </a>
               ),
             });
@@ -296,14 +296,14 @@ const AccumulativePage = () => {
           <Space>
             <Dropdown menu={{ items: menuItems }} placement="bottomLeft">
               <a onClick={(e) => e.preventDefault()}>
-                {t("projects.accumulative.view.report")} <DownOutlined />
+                {t("projects.comparison.view.report")} <DownOutlined />
               </a>
             </Dropdown>
             <Popconfirm
-              title={t("projects.accumulative.delete.confirm")}
+              title={t("projects.comparison.delete.confirm")}
               onConfirm={() => handleDelete(record)}
-              okText={t("projects.accumulative.modal.confirm")}
-              cancelText={t("projects.accumulative.modal.cancel")}
+              okText={t("projects.comparison.modal.confirm")}
+              cancelText={t("projects.comparison.modal.cancel")}
             >
               <Button type="link" danger icon={<DeleteOutlined />} size="small">
                 {t("common.delete")}
@@ -323,13 +323,13 @@ const AccumulativePage = () => {
     <div className={""}>
       <div className={"mb-4 flex items-center justify-between"}>
         <div>
-          <h2 style={{ margin: 0 }}>{t("projects.accumulative.title")}</h2>
+          <h2 style={{ margin: 0 }}>{t("projects.comparison.title")}</h2>
           <Text type="secondary" style={{ fontSize: "12px" }}>
-            {t("projects.accumulative.desc")}
+            {t("projects.comparison.desc")}
           </Text>
         </div>
         <Button type="primary" icon={<PlusOutlined />} onClick={() => setIsModalOpen(true)}>
-          {t("projects.accumulative.add")}
+          {t("projects.comparison.add")}
         </Button>
       </div>
 
@@ -341,14 +341,14 @@ const AccumulativePage = () => {
           rowKey="id"
           pagination={{
             total: total,
-            showTotal: (total) => t("projects.accumulative.pagination.total", { total }),
+            showTotal: (total) => t("projects.comparison.pagination.total", { total }),
             pageSize: 10,
           }}
         />
       </CardPrimary>
 
       <Modal
-        title={t("projects.accumulative.modal.title")}
+        title={t("projects.comparison.modal.title")}
         open={isModalOpen}
         onCancel={() => {
           if (!addLoading) {
@@ -359,47 +359,47 @@ const AccumulativePage = () => {
         onOk={() => {
           form.submit();
         }}
-        okText={t("projects.accumulative.modal.create")}
-        cancelText={t("projects.accumulative.modal.cancel")}
+        okText={t("projects.comparison.modal.create")}
+        cancelText={t("projects.comparison.modal.cancel")}
         confirmLoading={addLoading}
         cancelButtonProps={{ disabled: addLoading }}
       >
         <Form form={form} layout="vertical" onFinish={handleAdd}>
           <Form.Item
-            name="after"
-            label={t("projects.accumulative.form.after.label")}
+            name="base"
+            label={t("projects.comparison.form.base.label")}
             rules={[
               {
                 required: true,
-                message: t("projects.accumulative.form.after.required"),
+                message: t("projects.comparison.form.base.required"),
               },
               {
                 pattern: /^[a-f0-9]{40}$/i,
-                message: t("projects.accumulative.form.after.invalid"),
+                message: t("projects.comparison.form.base.invalid"),
               },
             ]}
           >
             <Input
-              placeholder={t("projects.accumulative.form.after.placeholder")}
+              placeholder={t("projects.comparison.form.base.placeholder")}
               disabled={addLoading}
             />
           </Form.Item>
           <Form.Item
-            name="now"
-            label={t("projects.accumulative.form.now.label")}
+            name="head"
+            label={t("projects.comparison.form.head.label")}
             rules={[
               {
                 required: true,
-                message: t("projects.accumulative.form.now.required"),
+                message: t("projects.comparison.form.head.required"),
               },
               {
                 pattern: /^[a-f0-9]{40}$/i,
-                message: t("projects.accumulative.form.now.invalid"),
+                message: t("projects.comparison.form.head.invalid"),
               },
             ]}
           >
             <Input
-              placeholder={t("projects.accumulative.form.now.placeholder")}
+              placeholder={t("projects.comparison.form.head.placeholder")}
               disabled={addLoading}
             />
           </Form.Item>

@@ -94,7 +94,7 @@ const ProjectDetailPage = () => {
             items={[
               {
                 key: "accumulative",
-                label: t("projects.detail.tabs.accumulative"),
+                label: t("projects.detail.tabs.comparison"),
               },
               { key: "commits", label: t("projects.detail.tabs.commits") },
             ]}

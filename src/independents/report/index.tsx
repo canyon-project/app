@@ -138,7 +138,7 @@ const ReportIndependent = () => {
       }
 
       if (subject === "accumulative") {
-        // 格式为 beforeCommitSHA...afterCommitSHA，使用 after (第二个) 作为 ref
+        // 格式为 baseSha...headSha，使用 head (第二个) 作为 ref
         const parts = subjectID.split("...");
         if (parts.length === 2) {
           return parts[1].trim();

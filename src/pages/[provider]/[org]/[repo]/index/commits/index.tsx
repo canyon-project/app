@@ -12,7 +12,6 @@ import {
   Input,
   message,
   Space,
-  Switch,
   Table,
   Tag,
   Tooltip,
@@ -93,27 +92,11 @@ const CommitsPage = () => {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [searchKeyword, setSearchKeyword] = useState("");
-  const [onlyDefaultBranch, setOnlyDefaultBranch] = useState(false);
-  const [defaultBranch, setDefaultBranch] = useState("");
   const [snapshotDrawerOpen, setSnapshotDrawerOpen] = useState(false);
   const [snapshotDrawerMode, setSnapshotDrawerMode] = useState<"create" | "records">("create");
   const [snapshotInitialValues, setSnapshotInitialValues] = useState<Partial<SnapshotFormValues>>(
     {},
   );
-
-  // 从 repo config 中解析默认分支
-  useEffect(() => {
-    if (repo?.config) {
-      try {
-        const config = JSON.parse(repo.config);
-        if (config?.defaultBranch) {
-          setDefaultBranch(config.defaultBranch);
-        }
-      } catch {
-        // 忽略解析错误
-      }
-    }
-  }, [repo]);
 
   const fetchCommits = async () => {
     if (!repo?.id) {
@@ -124,10 +107,8 @@ const CommitsPage = () => {
     try {
       const data = await getCommits({
         repoID: repo.id,
-        page,
-        pageSize,
-        search: searchKeyword || undefined,
-        defaultBranch: onlyDefaultBranch && defaultBranch ? defaultBranch : undefined,
+        page: 1,
+        pageSize: 10000,
       });
       setCommits(Array.isArray(data) ? data : []);
     } catch (error) {
@@ -140,10 +121,10 @@ const CommitsPage = () => {
 
   useEffect(() => {
     fetchCommits();
-  }, [repo?.id, page, pageSize, searchKeyword, onlyDefaultBranch, defaultBranch]);
+  }, [repo?.id]);
 
   // 展平数据：每个 buildTarget 一行（按 sha + buildTarget 分组）
-  const flatData = useMemo(() => {
+  const allFlatData = useMemo(() => {
     const result: FlatCommitRow[] = [];
     for (const commit of commits) {
       // 如果有 buildTargetScenes，使用它；否则回退到旧的逻辑
@@ -188,6 +169,19 @@ const CommitsPage = () => {
     }
     return result;
   }, [commits]);
+
+  // 前端搜索：按 commit SHA 过滤
+  const flatData = useMemo(() => {
+    const kw = searchKeyword.trim().toLowerCase();
+    if (!kw) return allFlatData;
+    return allFlatData.filter((row) => row.sha.toLowerCase().includes(kw));
+  }, [allFlatData, searchKeyword]);
+
+  // 前端分页
+  const paginatedData = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    return flatData.slice(start, start + pageSize);
+  }, [flatData, page, pageSize]);
 
   const columns: ColumnsType<FlatCommitRow> = [
     {
@@ -415,14 +409,13 @@ const CommitsPage = () => {
     <div className={""}>
       <div className={"mb-4 flex items-center gap-3"}>
         <Input
-          style={{ width: "600px" }}
-          placeholder={t("projects.overview_search_keywords")}
+          style={{ width: "400px" }}
+          placeholder={t("projects.commits.search.placeholder")}
           prefix={<SearchOutlined />}
           value={searchKeyword}
-          onChange={(e) => setSearchKeyword(e.target.value)}
-          onPressEnter={() => {
+          onChange={(e) => {
+            setSearchKeyword(e.target.value);
             setPage(1);
-            fetchCommits();
           }}
           allowClear
           onClear={() => {
@@ -430,18 +423,6 @@ const CommitsPage = () => {
             setPage(1);
           }}
         />
-        {defaultBranch && (
-          <Space>
-            <Text type={"secondary"}>{t("projects.only.default.branch")}:</Text>
-            <Switch
-              checked={onlyDefaultBranch}
-              onChange={(checked) => {
-                setOnlyDefaultBranch(checked);
-                setPage(1);
-              }}
-            />
-          </Space>
-        )}
       </div>
       <SnapshotDrawer
         open={snapshotDrawerOpen}
@@ -466,7 +447,7 @@ const CommitsPage = () => {
       <CardPrimary>
         <Table<FlatCommitRow>
           columns={columns}
-          dataSource={flatData}
+          dataSource={paginatedData}
           loading={loading}
           rowKey="rowKey"
           pagination={{

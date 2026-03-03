@@ -335,14 +335,14 @@ sourceApi.openapi(diffGetRoute, async (c) => {
       id: r.id,
       provider: r.provider,
       repoID: r.repoID,
-      after: r.from,
-      now: r.to,
+      base: r.from,
+      head: r.to,
       subject: r.subject,
       subjectID: r.subjectID,
       files: r.files,
       buildTargets,
-      fromCommit: fromCommit || null,
-      toCommit: toCommit || null,
+      baseCommit: fromCommit || null,
+      headCommit: toCommit || null,
     };
   });
 
