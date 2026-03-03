@@ -369,8 +369,8 @@ export async function getCoverageMapForAccumulative(
         const fnHashToNowId = new Map<string, string>();
         for (const [nowId, fn] of Object.entries(nowFn)) {
           if (fn?.contentHash) {
-            for (const [otherId, otherFn] of Object.entries(otherFn)) {
-              if ((otherFn as { contentHash?: string })?.contentHash === fn.contentHash) {
+            for (const [otherId, otherFnEntry] of Object.entries(otherFn)) {
+              if ((otherFnEntry as { contentHash?: string })?.contentHash === fn.contentHash) {
                 fnHashToNowId.set(fn.contentHash, nowId);
                 break;
               }
