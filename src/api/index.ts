@@ -43,7 +43,7 @@ api.doc("/doc", {
   servers: [{ url: "/api", description: "API base path" }],
 });
 
-api.get("/ui", swaggerUI({ url: "/api/doc" }));
+api.get("/ui", swaggerUI({ url: "/api/doc",baseUrl:"https://unpkg.com" }));
 
 api.get("/health", (c) => c.text("OK"));
 
