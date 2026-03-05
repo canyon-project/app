@@ -323,6 +323,7 @@ reposApi.openapi(createRouteDef, async (c) => {
     const info = await scm.getRepoInfo(body.repoID.trim());
     const id = `${body.provider}-${info.id}`;
     const now = new Date();
+    console.log('info', info,id);
     const repo = await prisma.repo.create({
       data: {
         id,

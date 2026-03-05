@@ -1,14 +1,15 @@
 import { SearchOutlined } from "@ant-design/icons";
 import { Button, Card, Descriptions, Form, Input, message, Select, Spin } from "antd";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import BasicLayout from "@/layouts/BasicLayout";
 import { checkRepo, createRepo } from "@/services/repo";
+import { getProviders, type ProviderItem } from "@/services/infra";
 import { getAxiosErrorMessage } from "@/helpers/api";
 
 type FormValues = {
   repoID: string;
-  provider: "github" | "gitlab";
+  provider: string;
 };
 
 type RepoCheckResult = {
@@ -17,13 +18,30 @@ type RepoCheckResult = {
   description: string;
 };
 
+function formatProviderLabel(p: ProviderItem): string {
+  const typeLabel = p.type === "gitlab" ? "GitLab" : "GitHub";
+  if (p.baseUrl) {
+    return `${typeLabel} (${p.baseUrl})`;
+  }
+  return p.provider === p.type ? typeLabel : `${typeLabel} (${p.provider})`;
+}
+
 const NewProject = () => {
   const navigate = useNavigate();
   const [form] = Form.useForm<FormValues>();
+  const [providers, setProviders] = useState<ProviderItem[]>([]);
+  const [providersLoading, setProvidersLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [checkLoading, setCheckLoading] = useState(false);
   const [checkResult, setCheckResult] = useState<RepoCheckResult | null>(null);
   const [checkError, setCheckError] = useState<string | null>(null);
+
+  useEffect(() => {
+    getProviders()
+      .then(setProviders)
+      .catch(() => message.error("获取 Provider 列表失败"))
+      .finally(() => setProvidersLoading(false));
+  }, []);
 
   const handleCheck = async () => {
     const values = await form.validateFields(["repoID", "provider"]).catch(() => null);
@@ -58,7 +76,7 @@ const NewProject = () => {
       message.success("创建成功");
       navigate("/projects");
     } catch (e) {
-      message.error(getAxiosErrorMessage(e) || "请求失败");
+      // message.error(getAxiosErrorMessage(e) || "请求失败");
     } finally {
       setSubmitting(false);
     }
@@ -92,14 +110,14 @@ const NewProject = () => {
             name="provider"
             label="来源"
             rules={[{ required: true, message: "请选择来源" }]}
-            initialValue="gitlab"
           >
             <Select
-              placeholder="请选择"
-              options={[
-                { label: "GitHub", value: "github" },
-                { label: "GitLab", value: "gitlab" },
-              ]}
+              placeholder={providersLoading ? "加载中..." : "请选择"}
+              loading={providersLoading}
+              options={providers.map((p) => ({
+                label: formatProviderLabel(p),
+                value: p.provider,
+              }))}
             />
           </Form.Item>
 
