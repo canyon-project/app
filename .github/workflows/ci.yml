@@ -42,7 +42,7 @@ jobs:
       - name: Push database schema
         run: pnpm exec prisma db push --accept-data-loss
         env:
-          DATABASE_URL: postgres://postgres:postgres@localhost:5432/canyon_test
+          DATABASE_URL: postgres://postgres:123456@localhost:5432/postgres
 
       - name: Lint
         run: pnpm run lint
@@ -53,12 +53,12 @@ jobs:
       - name: Test
         run: pnpm test
         env:
-          DATABASE_URL: postgres://postgres:postgres@localhost:5432/canyon_test
+          DATABASE_URL: postgres://postgres:123456@localhost:5432/postgres
 
       - name: Build
         run: pnpm build
         env:
-          DATABASE_URL: postgres://postgres:postgres@localhost:5432/canyon_test
+          DATABASE_URL: postgres://postgres:123456@localhost:5432/postgres
 
       - name: Install Playwright browsers
         run: pnpm exec playwright install --with-deps chromium
@@ -67,5 +67,5 @@ jobs:
         run: pnpm test:e2e
         env:
           CI: "true"
-          DATABASE_URL: postgres://postgres:postgres@localhost:5432/canyon_test
+          DATABASE_URL: postgres://postgres:123456@localhost:5432/postgres
           PLAYWRIGHT_BASE_URL: http://localhost:3000

@@ -3,8 +3,8 @@ services:
     image: postgres:16-alpine
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: canyon_test
+      POSTGRES_PASSWORD: "123456"
+      POSTGRES_DB: postgres
     ports:
       - "5432:5432"
     healthcheck:
