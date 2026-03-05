@@ -40,3 +40,9 @@ old
 prisma/local.db
 
 schema.sql
+
+
+.canyon_output
+test-results
+
+playwright-report

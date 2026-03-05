@@ -12,7 +12,13 @@ export default defineConfig({
     target: "es2022", // 支持 top-level await
   },
   plugins: [
-    react(),
+    react({
+      plugins:[
+        ['swc-plugin-coverage-instrument',{
+          
+        }]
+      ]
+    }),
     Pages({
       exclude: ["**/views/**", "**/helpers/**"],
     }),

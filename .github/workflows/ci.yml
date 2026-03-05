@@ -1,0 +1,71 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "pnpm"
+
+      - name: Start PostgreSQL
+        run: docker compose up -d postgres
+
+      - name: Wait for PostgreSQL
+        run: |
+          until docker compose exec -T postgres pg_isready -U postgres; do
+            echo "Waiting for PostgreSQL..."
+            sleep 2
+          done
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Generate Prisma Client
+        run: pnpm run generate
+
+      - name: Push database schema
+        run: pnpm exec prisma db push --accept-data-loss
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/canyon_test
+
+      - name: Lint
+        run: pnpm run lint
+
+      - name: Format check
+        run: pnpm run fmt
+
+      - name: Test
+        run: pnpm test
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/canyon_test
+
+      - name: Build
+        run: pnpm build
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/canyon_test
+
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Run E2E tests
+        run: pnpm test:e2e
+        env:
+          CI: "true"
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/canyon_test
+          PLAYWRIGHT_BASE_URL: http://localhost:3000
