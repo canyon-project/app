@@ -110,7 +110,8 @@ const createRouteDef = createRoute({
   method: "post",
   path: "/",
   summary: "创建仓库",
-  description: "将 GitLab/GitHub 仓库添加到系统中。必传 provider、repoID，通过 SCM 接口获取 pathWithNamespace、description 等。",
+  description:
+    "将 GitLab/GitHub 仓库添加到系统中。必传 provider、repoID，通过 SCM 接口获取 pathWithNamespace、description 等。",
   tags: ["仓库"],
   request: {
     body: {
@@ -323,7 +324,7 @@ reposApi.openapi(createRouteDef, async (c) => {
     const info = await scm.getRepoInfo(body.repoID.trim());
     const id = `${body.provider}-${info.id}`;
     const now = new Date();
-    console.log('info', info,id);
+    console.log("info", info, id);
     const repo = await prisma.repo.create({
       data: {
         id,

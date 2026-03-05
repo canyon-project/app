@@ -11,8 +11,11 @@ export const request = axios.create({
 
 function extractErrorMessage(err: unknown): string {
   if (err && typeof err === "object" && "response" in err) {
-    const res = (err as { response?: { data?: { error?: string; message?: string | string[] }; status?: number } })
-      .response;
+    const res = (
+      err as {
+        response?: { data?: { error?: string; message?: string | string[] }; status?: number };
+      }
+    ).response;
     const data = res?.data;
     if (data?.error && typeof data.error === "string") return data.error;
     const msg = data?.message;

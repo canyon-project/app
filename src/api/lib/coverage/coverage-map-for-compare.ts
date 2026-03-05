@@ -36,9 +36,7 @@ function buildSceneQueryCondition(scene?: string) {
  * 按 compare（commit1...commit2）查询对比覆盖率 map
  * 合并 from..to 之间所有 commit 的 hit 数据到 headSha 的 map 上
  */
-export async function getCoverageMapForCompare(
-  params: CoverageMapForCompareParams,
-): Promise<
+export async function getCoverageMapForCompare(params: CoverageMapForCompareParams): Promise<
   | {
       success: true;
       baseCommit: string;
@@ -92,7 +90,8 @@ export async function getCoverageMapForCompare(
   }
 
   const headShaCoverageRecord = headShaCoverageRecords[0];
-  const { instrumentCwd: headShaInstrumentCwd, buildHash: headShaBuildHash } = headShaCoverageRecord;
+  const { instrumentCwd: headShaInstrumentCwd, buildHash: headShaBuildHash } =
+    headShaCoverageRecord;
   const headShaInstrumentCwdPrefix = headShaInstrumentCwd + "/";
 
   const headShaMapRelations = await prisma.coverageMapRelation.findMany({

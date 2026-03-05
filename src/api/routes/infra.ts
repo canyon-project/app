@@ -1,7 +1,7 @@
 import { createRoute, z } from "@hono/zod-openapi";
 import { OpenAPIHono } from "@hono/zod-openapi";
 import { prisma } from "@/api/lib/prisma.ts";
-import {logger} from "@/api/logger";
+import { logger } from "@/api/logger";
 
 const ProviderItemSchema = z
   .object({
@@ -14,7 +14,9 @@ const ProviderItemSchema = z
 /**
  * 从 Infra 配置键解析 provider 列表，含 type 与 baseUrl
  */
-function buildProviderList(rows: { id: string; value: string }[]): { provider: string; type: "gitlab" | "github"; baseUrl: string }[] {
+function buildProviderList(
+  rows: { id: string; value: string }[],
+): { provider: string; type: "gitlab" | "github"; baseUrl: string }[] {
   const keyToValue = new Map(rows.map((r) => [r.id, r.value]));
   const seen = new Set<string>();
 
@@ -77,8 +79,8 @@ infraApi.openapi(providersRoute, async (c) => {
     message: "Fetched provider list from Infra",
     type: "info",
     title: "Infra API",
-    addInfo: { count: providers.length, providers:JSON.stringify(providers) },
-  })
+    addInfo: { count: providers.length, providers: JSON.stringify(providers) },
+  });
   return c.json({ providers });
 });
 

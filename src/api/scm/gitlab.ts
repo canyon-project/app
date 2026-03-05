@@ -1,11 +1,5 @@
 import axios from "axios";
-import type {
-  ChangedFile,
-  CommitDetail,
-  CommitInfo,
-  CompareDiffItem,
-  RepoInfo,
-} from "./types.ts";
+import type { ChangedFile, CommitDetail, CommitInfo, CompareDiffItem, RepoInfo } from "./types.ts";
 import type { ScmAdapter } from "./adapter.ts";
 
 type GitlabScmConfig = { type: "gitlab"; base: string; token: string };
@@ -76,11 +70,7 @@ export class GitlabAdapter implements ScmAdapter {
     };
   }
 
-  async getCommitDetail(
-    repoID: string,
-    sha: string,
-    provider: string,
-  ): Promise<CommitDetail> {
+  async getCommitDetail(repoID: string, sha: string, provider: string): Promise<CommitDetail> {
     const pid = encodeURIComponent(repoID);
     const url = `${this.base}/api/v4/projects/${pid}/repository/commits/${encodeURIComponent(sha)}`;
     const { data } = await axios.get<{
@@ -96,8 +86,7 @@ export class GitlabAdapter implements ScmAdapter {
       stats?: { additions?: number; deletions?: number };
       [key: string]: unknown;
     }>(url, { headers: this.headers(), timeout: 10000 });
-    const createdAt =
-      data?.authored_date ?? data?.committed_date ?? data?.created_at ?? "";
+    const createdAt = data?.authored_date ?? data?.committed_date ?? data?.created_at ?? "";
     return {
       sha: data?.id ?? sha,
       provider,

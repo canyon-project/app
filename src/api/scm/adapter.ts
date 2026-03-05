@@ -1,10 +1,4 @@
-import type {
-  ChangedFile,
-  CommitDetail,
-  CommitInfo,
-  CompareDiffItem,
-  RepoInfo,
-} from "./types.ts";
+import type { ChangedFile, CommitDetail, CommitInfo, CompareDiffItem, RepoInfo } from "./types.ts";
 
 /**
  * SCM 适配器接口：业务层只依赖此接口，通过 createScmAdapter 获取具体实现。

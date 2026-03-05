@@ -17,7 +17,6 @@ import userApi from "@/api/routes/user.ts";
 import infraApi from "@/api/routes/infra.ts";
 import { historyApiFallback } from "hono-history-api-fallback";
 
-
 await loadInfra();
 await initPrismaSqlite();
 startCoverageConsumer();
@@ -45,7 +44,7 @@ api.doc("/doc", {
   servers: [{ url: "/api", description: "API base path" }],
 });
 
-api.get("/ui", swaggerUI({ url: "/api/doc",baseUrl:"https://unpkg.com" }));
+api.get("/ui", swaggerUI({ url: "/api/doc", baseUrl: "https://unpkg.com" }));
 
 api.get("/health", (c) => c.text("OK"));
 
