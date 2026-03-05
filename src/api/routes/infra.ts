@@ -1,6 +1,7 @@
 import { createRoute, z } from "@hono/zod-openapi";
 import { OpenAPIHono } from "@hono/zod-openapi";
 import { prisma } from "@/api/lib/prisma.ts";
+import {logger} from "@/api/logger";
 
 const ProviderItemSchema = z
   .object({
@@ -72,6 +73,12 @@ const infraApi = new OpenAPIHono();
 infraApi.openapi(providersRoute, async (c) => {
   const rows = await prisma.infra.findMany({ select: { id: true, value: true } });
   const providers = buildProviderList(rows);
+  logger({
+    message: "Fetched provider list from Infra",
+    type: "info",
+    title: "Infra API",
+    addInfo: { count: providers.length, providers:JSON.stringify(providers) },
+  })
   return c.json({ providers });
 });
 
