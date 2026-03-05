@@ -1,8 +1,8 @@
 import { createRoute, z } from "@hono/zod-openapi";
+import { ProviderQueryParam } from "@/shared/schemas/provider.ts";
 import { OpenAPIHono } from "@hono/zod-openapi";
 import { prisma } from "@/api/lib/prisma.ts";
-import { createScmAdapter } from "@/api/scm/index.ts";
-import { getInfra, InfraKey } from "@/api/lib/infra.ts";
+import { getScm } from "@/api/lib/scm.ts";
 import { buildRepoUrl } from "@/api/lib/commit-url.ts";
 import { RepoSchema, CreateRepoSchema, UpdateRepoSchema } from "@/shared/schemas/repo.ts";
 
@@ -20,7 +20,7 @@ const checkRoute = createRoute({
   request: {
     query: z.object({
       repoID: z.string().openapi({ param: { name: "repoID", in: "query" } }),
-      provider: z.enum(["github", "gitlab"]).openapi({ param: { name: "provider", in: "query" } }),
+      provider: ProviderQueryParam,
     }),
   },
   responses: {
@@ -197,23 +197,9 @@ const toResponse = (
 
 reposApi.openapi(checkRoute, async (c) => {
   const { repoID, provider } = c.req.valid("query");
-  const p = provider.toLowerCase();
-  let scm = null;
-  if (p === "gitlab") {
-    const base = getInfra(InfraKey.GITLAB_BASE_URL);
-    const token = getInfra(InfraKey.GITLAB_PRIVATE_TOKEN);
-    if (!base || !token || token === "-") {
-      return c.json({ error: "GitLab 配置缺失" }, 400);
-    }
-    scm = createScmAdapter({ type: "gitlab", base, token });
-  } else if (p === "github") {
-    const token = getInfra(InfraKey.GITHUB_PRIVATE_TOKEN);
-    if (!token || token === "-") {
-      return c.json({ error: "GitHub 配置缺失" }, 400);
-    }
-    scm = createScmAdapter({ type: "github", token });
-  } else {
-    return c.json({ error: `不支持的 provider: ${provider}` }, 400);
+  const scm = getScm(provider);
+  if (!scm) {
+    return c.json({ error: `不支持的 provider 或配置缺失: ${provider}` }, 400);
   }
   try {
     const info = await scm.getRepoInfo(repoID.trim());
@@ -314,20 +300,7 @@ reposApi.openapi(getRoute, async (c) => {
   const response = toResponse(repo);
 
   // 尝试从 SCM（GitLab/GitHub）拉取最新仓库信息，丰富 description
-  const provider = repo.provider.toLowerCase();
-  let scm = null;
-  if (provider === "gitlab") {
-    const base = getInfra(InfraKey.GITLAB_BASE_URL);
-    const token = getInfra(InfraKey.GITLAB_PRIVATE_TOKEN);
-    if (base && token && token !== "-") {
-      scm = createScmAdapter({ type: "gitlab", base, token });
-    }
-  } else if (provider === "github") {
-    const token = getInfra(InfraKey.GITHUB_PRIVATE_TOKEN);
-    if (token && token !== "-") {
-      scm = createScmAdapter({ type: "github", token });
-    }
-  }
+  const scm = getScm(repo.provider);
   if (scm) {
     try {
       const scmInfo = await scm.getRepoInfo(repo.pathWithNamespace);
@@ -342,23 +315,9 @@ reposApi.openapi(getRoute, async (c) => {
 
 reposApi.openapi(createRouteDef, async (c) => {
   const body = c.req.valid("json");
-  const p = body.provider.toLowerCase();
-  let scm = null;
-  if (p === "gitlab") {
-    const base = getInfra(InfraKey.GITLAB_BASE_URL);
-    const token = getInfra(InfraKey.GITLAB_PRIVATE_TOKEN);
-    if (!base || !token || token === "-") {
-      return c.json({ error: "GitLab 配置缺失" }, 400);
-    }
-    scm = createScmAdapter({ type: "gitlab", base, token });
-  } else if (p === "github") {
-    const token = getInfra(InfraKey.GITHUB_PRIVATE_TOKEN);
-    if (!token || token === "-") {
-      return c.json({ error: "GitHub 配置缺失" }, 400);
-    }
-    scm = createScmAdapter({ type: "github", token });
-  } else {
-    return c.json({ error: `不支持的 provider: ${body.provider}` }, 400);
+  const scm = getScm(body.provider);
+  if (!scm) {
+    return c.json({ error: `不支持的 provider 或配置缺失: ${body.provider}` }, 400);
   }
   try {
     const info = await scm.getRepoInfo(body.repoID.trim());

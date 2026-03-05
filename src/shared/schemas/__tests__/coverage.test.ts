@@ -44,6 +44,16 @@ describe("CoverageMapQuerySchema", () => {
     }
   });
 
+  it("应通过 gitlab_tujia 等扩展 provider", () => {
+    const result = CoverageMapQuerySchema.safeParse({
+      subject: "commit",
+      subjectID: "6f041f00bddd5ebed2285bbc742393f82c4236ac",
+      provider: "gitlab_tujia",
+      repoID: "2378",
+    });
+    expect(result.success).toBe(true);
+  });
+
   it("subject 枚举外应失败", () => {
     const result = CoverageMapQuerySchema.safeParse({
       subject: "invalid",

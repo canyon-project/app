@@ -1,11 +1,11 @@
-import { getInfra, InfraKey } from "@/api/lib/infra.ts";
+import { getProviderInfra } from "@/api/lib/scm.ts";
 
 const GITHUB_BASE = "https://github.com";
 
 /**
  * 根据 provider、pathWithNamespace、sha 构建 SCM 的 commit 页面 URL
- * GitLab: 从 infra 读取 GITLAB_BASE_URL
- * GitHub: 固定 https://github.com
+ * GitLab: 从 infra 按 provider 拼接键读取 BASE_URL（如 GITLAB_TUJIA_BASE_URL）
+ * GitHub: 有 BASE_URL 则用，否则固定 https://github.com
  */
 export function buildCommitUrl(
   provider: string,
@@ -18,14 +18,17 @@ export function buildCommitUrl(
   const path = pathWithNamespace.trim();
   if (!path) return null;
 
-  if (p === "gitlab") {
-    const base = getInfra(InfraKey.GITLAB_BASE_URL)?.replace(/\/$/, "") || "";
-    if (!base) return null;
-    return `${base}/${path}/-/commit/${sha}`;
+  if (p === "gitlab" || p.startsWith("gitlab_")) {
+    const { base } = getProviderInfra(provider);
+    const urlBase = base?.replace(/\/$/, "") || "";
+    if (!urlBase) return null;
+    return `${urlBase}/${path}/-/commit/${sha}`;
   }
 
-  if (p === "github") {
-    return `${GITHUB_BASE}/${path}/commit/${sha}`;
+  if (p === "github" || p.startsWith("github_")) {
+    const { base } = getProviderInfra(provider);
+    const urlBase = base?.replace(/\/$/, "") || GITHUB_BASE;
+    return `${urlBase}/${path}/commit/${sha}`;
   }
 
   return null;
@@ -41,14 +44,17 @@ export function buildRepoUrl(provider: string, pathWithNamespace: string): strin
   const path = pathWithNamespace.trim();
   if (!path) return null;
 
-  if (p === "gitlab") {
-    const base = getInfra(InfraKey.GITLAB_BASE_URL)?.replace(/\/$/, "") || "";
-    if (!base) return null;
-    return `${base}/${path}`;
+  if (p === "gitlab" || p.startsWith("gitlab_")) {
+    const { base } = getProviderInfra(provider);
+    const urlBase = base?.replace(/\/$/, "") || "";
+    if (!urlBase) return null;
+    return `${urlBase}/${path}`;
   }
 
-  if (p === "github") {
-    return `${GITHUB_BASE}/${path}`;
+  if (p === "github" || p.startsWith("github_")) {
+    const { base } = getProviderInfra(provider);
+    const urlBase = base?.replace(/\/$/, "") || GITHUB_BASE;
+    return `${urlBase}/${path}`;
   }
 
   return null;

@@ -1,7 +1,6 @@
 import axios from "axios";
 import { prisma } from "@/api/lib/prisma.ts";
-import { createScmAdapter } from "@/api/scm/index.ts";
-import { getInfra, InfraKey } from "@/api/lib/infra.ts";
+import { getProviderInfra } from "@/api/lib/scm.ts";
 
 /** 从 Cr content 提取 head repoID 和 sha */
 function extractHeadFromCr(content: unknown): { headRepoID: string; headSha: string } | null {
@@ -59,31 +58,26 @@ export async function resolveRepoAndRef(params: GetFileContentParams): Promise<{
   }
 
   if (!actualRef && compareID && provider) {
-    if (provider === "gitlab" || provider.startsWith("gitlab")) {
-      const base = getInfra(InfraKey.GITLAB_BASE_URL);
-      const token = getInfra(InfraKey.GITLAB_PRIVATE_TOKEN);
-      if (base && token && token !== "-") {
-        const url = `${base}/api/v4/projects/${encodeURIComponent(actualRepoID)}/merge_requests/${encodeURIComponent(compareID)}`;
-        const { data } = await axios.get<{ diff_refs?: { head_sha?: string }; sha?: string }>(url, {
-          headers: { "PRIVATE-TOKEN": token },
+    const { base, token } = getProviderInfra(provider);
+    const p = provider.toLowerCase();
+    if ((p === "gitlab" || p.startsWith("gitlab_")) && base && token && token !== "-") {
+      const url = `${base}/api/v4/projects/${encodeURIComponent(actualRepoID)}/merge_requests/${encodeURIComponent(compareID)}`;
+      const { data } = await axios.get<{ diff_refs?: { head_sha?: string }; sha?: string }>(url, {
+        headers: { "PRIVATE-TOKEN": token },
+        timeout: 10000,
+      });
+      actualRef = data?.diff_refs?.head_sha ?? data?.sha ?? "";
+    } else if ((p === "github" || p.startsWith("github_")) && token && token !== "-") {
+      const [owner, repo] = actualRepoID.includes("/")
+        ? actualRepoID.split("/")
+        : ["", actualRepoID];
+      if (owner && repo) {
+        const url = `https://api.github.com/repos/${owner}/${repo}/pulls/${compareID}`;
+        const { data } = await axios.get<{ head?: { sha?: string } }>(url, {
+          headers: { Authorization: `token ${token}` },
           timeout: 10000,
         });
-        actualRef = data?.diff_refs?.head_sha ?? data?.sha ?? "";
-      }
-    } else if (provider === "github" || provider.startsWith("github")) {
-      const token = getInfra(InfraKey.GITHUB_PRIVATE_TOKEN);
-      if (token && token !== "-") {
-        const [owner, repo] = actualRepoID.includes("/")
-          ? actualRepoID.split("/")
-          : ["", actualRepoID];
-        if (owner && repo) {
-          const url = `https://api.github.com/repos/${owner}/${repo}/pulls/${compareID}`;
-          const { data } = await axios.get<{ head?: { sha?: string } }>(url, {
-            headers: { Authorization: `token ${token}` },
-            timeout: 10000,
-          });
-          actualRef = data?.head?.sha ?? "";
-        }
+        actualRef = data?.head?.sha ?? "";
       }
     }
   }

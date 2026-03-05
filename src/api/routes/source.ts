@@ -1,4 +1,5 @@
 import { createRoute, z } from "@hono/zod-openapi";
+import { ProviderQueryParam, ProviderSchema } from "@/shared/schemas/provider.ts";
 import { OpenAPIHono } from "@hono/zod-openapi";
 import { prisma } from "@/api/lib/prisma.ts";
 import { ensureCommitFromScm, toCommitId } from "@/api/lib/commit.ts";
@@ -8,7 +9,7 @@ import { diffLine } from "@/api/lib/source/diff-line.ts";
 
 const SourceQuerySchema = z.object({
   repo_id: z.string().openapi({ param: { name: "repo_id", in: "query" } }),
-  provider: z.enum(["gitlab", "github"]).openapi({ param: { name: "provider", in: "query" } }),
+  provider: ProviderQueryParam,
   path: z.string().openapi({ param: { name: "path", in: "query" } }),
   ref: z
     .string()
@@ -66,10 +67,7 @@ const projectRoute = createRoute({
   request: {
     query: z.object({
       path: z.string().openapi({ param: { name: "path", in: "query" } }),
-      provider: z
-        .enum(["gitlab", "github"])
-        .optional()
-        .openapi({ param: { name: "provider", in: "query" } }),
+      provider: ProviderQueryParam.optional(),
     }),
   },
   responses: {
@@ -128,7 +126,7 @@ const commitPostRoute = createRoute({
       content: {
         "application/json": {
           schema: z.object({
-            provider: z.enum(["gitlab", "github"]).describe("SCM 提供商"),
+            provider: ProviderSchema.describe("SCM 提供商"),
             repoID: z.string().describe("仓库 ID，如 GitLab project id 或 org/repo"),
             sha: z.string().describe("Commit SHA"),
           }),

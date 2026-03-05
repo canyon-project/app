@@ -1,6 +1,5 @@
 import { prisma } from "@/api/lib/prisma.ts";
-import { createScmAdapter } from "@/api/scm/index.ts";
-import { getInfra, InfraKey } from "@/api/lib/infra.ts";
+import { getScm } from "@/api/lib/scm.ts";
 import { decodeCompressedObject } from "@/api/lib/collect/helpers.ts";
 import { addMaps, ensureNumMap, type NumMap } from "@/api/lib/collect/coverage-merge.util.ts";
 import { testExclude } from "@/api/lib/coverage/test-exclude.ts";
@@ -68,15 +67,7 @@ export async function getCoverageMapForCompare(
     select: { path: true, additions: true, deletions: true },
   });
 
-  let scm = null;
-  if (provider === "gitlab" || provider.startsWith("gitlab")) {
-    const base = getInfra(InfraKey.GITLAB_BASE_URL);
-    const token = getInfra(InfraKey.GITLAB_PRIVATE_TOKEN);
-    if (base && token && token !== "-") scm = createScmAdapter({ type: "gitlab", base, token });
-  } else if (provider === "github" || provider.startsWith("github")) {
-    const token = getInfra(InfraKey.GITHUB_PRIVATE_TOKEN);
-    if (token && token !== "-") scm = createScmAdapter({ type: "github", token });
-  }
+  const scm = getScm(provider);
   if (!scm) return { success: false, message: "SCM 配置缺失" };
 
   const filteredCommits = await scm.getCommitsBetween(repoID, baseSha, headSha);
