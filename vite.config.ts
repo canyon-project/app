@@ -9,13 +9,13 @@ import { copyPrismaEngines } from "./copyPrismaEngines.ts";
 
 export default defineConfig({
   build: {
-    target: "es2022", // 支持 top-level await
+    target: "es2022",
   },
   plugins: [
     react({
       plugins:[
         ['swc-plugin-coverage-instrument',{
-          
+
         }]
       ]
     }),
@@ -30,7 +30,6 @@ export default defineConfig({
     }),
     devServer({
       entry: "./src/api/index.ts",
-      // 不带 /api 的请求交给 Vite，带 /api 的由 Hono 处理
       exclude: [/^(?!\/api(\/|$|\?))/],
     }),
     copyPrismaEngines(),

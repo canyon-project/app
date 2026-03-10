@@ -10,7 +10,7 @@
     "build:server": "vite build",
     "start": "node dist/index.js",
     "test": "vitest run",
-        "gen-coverage-report": "nyc report --reporter=@canyonjs/report --temp-dir=./.canyon_output",
+    "gen-coverage-report": "nyc report --reporter=@canyonjs/report --temp-dir=./.canyon_output",
     "test:e2e": "playwright test && npm run gen-coverage-report",
     "lint": "oxlint",
     "lint:fix": "oxlint --fix",
